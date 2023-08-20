@@ -1,11 +1,10 @@
 import Image from "next/image";
-import { ModeToggle } from "./ModeToggle";
 import { ScrollArea } from "./ui/scroll-area";
 import Link from "next/link";
 import { EyeOff, PanelRight } from "lucide-react";
-import { type Dispatch, type SetStateAction } from "react";
-import { CreateBoard } from "./CreateBoard";
 import { useSidebar } from "~/lib/hooks/use-sidebar";
+import CreateBoard from "./CreateBoard";
+import ModeToggle from "./ModeToggle";
 
 const ACTIVE = true;
 
@@ -13,7 +12,7 @@ export default function Sidebar() {
   const hideSidebar = useSidebar((state) => state.onClose);
 
   return (
-    <ScrollArea className="flex h-full w-64 border-0 border-r border-solid border-gray-200 bg-main-background dark:border-gray-700">
+    <ScrollArea className="flex h-full w-64 border-0 border-r border-solid border-main-border bg-main-background">
       <aside className="flex min-h-screen w-full flex-col">
         <figure className="mt-5 flex w-full items-center gap-x-3 pl-6">
           <Image

@@ -11,7 +11,7 @@ import {
 } from "src/components/ui/dropdown-menu";
 import { Switch } from "./ui/switch";
 
-export function ModeToggle() {
+export default function ModeToggle() {
   const { setTheme, theme } = useTheme();
   const [mounted, setMounted] = useState<boolean>(false);
 
