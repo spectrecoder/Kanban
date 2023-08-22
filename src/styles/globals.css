@@ -78,6 +78,9 @@
   * {
     @apply border-border;
   }
+  html {
+    @apply overflow-x-hidden;
+  }
   body {
     @apply bg-main-background text-foreground;
   }

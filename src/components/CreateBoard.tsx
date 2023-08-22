@@ -55,7 +55,7 @@ export default function CreateBoard() {
           </p>
         </button>
       </DialogTrigger>
-      <DialogContent className="bg-main-background sm:max-w-[425px]">
+      <DialogContent className="max-h-[90%] overflow-y-auto bg-main-background scrollbar-none sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Add new board</DialogTitle>
         </DialogHeader>
