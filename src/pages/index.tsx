@@ -6,6 +6,8 @@ import { api } from "~/lib/api";
 import { Eye } from "lucide-react";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useSidebar } from "~/lib/hooks/use-sidebar";
+import TaskCard from "~/components/TaskCard";
+import EditTask from "~/components/EditTask";
 
 export default function Home() {
   const [parent] = useAutoAnimate();
@@ -35,6 +37,8 @@ export default function Home() {
           )}
         </section>
         <Board />
+        <TaskCard />
+        <EditTask />
       </main>
     </>
   );

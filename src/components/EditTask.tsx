@@ -31,6 +31,7 @@ import { Textarea } from "./ui/textarea";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { useEditTask } from "~/lib/hooks/use-edit-task";
 
 const formSchema = z.object({
   taskName: z
@@ -44,7 +45,12 @@ const formSchema = z.object({
   status: z.string(),
 });
 
-export default function CreateTask() {
+export default function EditTask() {
+  const [isOpen, onClose] = useEditTask((state) => [
+    state.isOpen,
+    state.onClose,
+  ]);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -59,17 +65,10 @@ export default function CreateTask() {
   }
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button
-          type="button"
-          size="full"
-          variant="purple"
-          className="h-12 px-5 text-base font-semibold capitalize"
-        >
-          + add new task
-        </Button>
-      </DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      {/* <DialogTrigger asChild>
+        <span>Edit Task</span>
+      </DialogTrigger> */}
 
       <DialogContent className="max-h-[90%] overflow-y-auto bg-main-background scrollbar-none sm:max-w-[425px]">
         <DialogHeader>
@@ -86,8 +85,9 @@ export default function CreateTask() {
                   <FormLabel>Task Name</FormLabel>
                   <FormControl>
                     <Input
+                      defaultValue="Build UI for onboarding flow"
                       placeholder="e.g. Take coffee break"
-                      {...field}
+                      {...{ ...field, value: undefined }}
                       className="cursor-pointer outline-0 ring-offset-0 focus-visible:border-main-color focus-visible:outline-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                     />
                   </FormControl>
@@ -104,9 +104,10 @@ export default function CreateTask() {
                   <FormLabel>Description</FormLabel>
                   <FormControl>
                     <Textarea
+                      defaultValue="It's always good to take a break. This  15 minute break will  recharge the batteries  a little."
                       placeholder="e.g. It's always good to take a break. This  15 minute break will  recharge the batteries  a little."
                       className="h-28 cursor-pointer resize-none outline-0 ring-offset-0 focus-visible:border-main-color focus-visible:outline-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                      {...field}
+                      {...{ ...field, value: undefined }}
                     />
                   </FormControl>
                   <FormMessage />
@@ -117,11 +118,24 @@ export default function CreateTask() {
             <fieldset className="grid w-full gap-2.5">
               <Label>Subtasks</Label>
               <div className="flex items-center gap-x-2">
-                <Input className="cursor-pointer outline-0 ring-offset-0 focus-visible:border-main-color focus-visible:outline-0 focus-visible:ring-0 focus-visible:ring-offset-0" />
+                <Input
+                  defaultValue="Sign up page"
+                  className="cursor-pointer outline-0 ring-offset-0 focus-visible:border-main-color focus-visible:outline-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                />
                 <X className="h-7 w-7 cursor-pointer text-gray-400" />
               </div>
               <div className="flex items-center gap-x-2">
-                <Input className="cursor-pointer outline-0 ring-offset-0 focus-visible:border-main-color focus-visible:outline-0 focus-visible:ring-0 focus-visible:ring-offset-0" />
+                <Input
+                  defaultValue="Sign in page"
+                  className="cursor-pointer outline-0 ring-offset-0 focus-visible:border-main-color focus-visible:outline-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                />
+                <X className="h-7 w-7 cursor-pointer text-gray-400" />
+              </div>
+              <div className="flex items-center gap-x-2">
+                <Input
+                  defaultValue="Welcome page"
+                  className="cursor-pointer outline-0 ring-offset-0 focus-visible:border-main-color focus-visible:outline-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                />
                 <X className="h-7 w-7 cursor-pointer text-gray-400" />
               </div>
             </fieldset>
@@ -167,7 +181,7 @@ export default function CreateTask() {
                 variant="purple"
                 className="w-full font-bold capitalize"
               >
-                create task
+                edit task
               </Button>
             </DialogFooter>
           </form>

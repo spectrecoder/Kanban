@@ -18,15 +18,22 @@ export default function Board() {
           !isSidebarOpen && "w-screen max-w-[100vw]"
         )}
       >
-        <main className={cn("flex gap-x-6 p-5")}>
-          <TasksGroup />
-          <TasksGroup />
+        <div className="flex h-[calc(100vh-76.8px)] gap-x-6 overflow-y-auto p-5 scrollbar-none">
+          <main className="flex h-fit gap-x-6">
+            <div className="flex h-full gap-x-6">
+              <TasksGroup />
+              <TasksGroup />
 
-          <TasksGroup />
-          <TasksGroup />
+              <TasksGroup />
+              <TasksGroup />
 
-          <TasksGroup />
-        </main>
+              <TasksGroup />
+            </div>
+            <aside className="mt-9 flex max-h-[813px] min-h-[572.2px] w-[17.5rem] shrink-0 cursor-pointer items-center justify-center rounded-md bg-sky-100/60 text-[1.65rem] font-semibold capitalize text-gray-600 hover:text-main-color dark:bg-main-background/40 dark:text-gray-500 dark:hover:text-main-color">
+              + new column
+            </aside>
+          </main>
+        </div>
       </ScrollArea>
     </section>
   );
