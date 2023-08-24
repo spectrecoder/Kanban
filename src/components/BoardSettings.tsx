@@ -8,8 +8,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "src/components/ui/dropdown-menu";
+import { useDeleteBoard } from "~/lib/hooks/use-delete-board";
 
 export default function BoardSettings() {
+  const onOpen = useDeleteBoard((state) => state.onOpen);
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -21,7 +24,10 @@ export default function BoardSettings() {
         <DropdownMenuGroup>
           <DropdownMenuItem>Edit Board</DropdownMenuItem>
 
-          <DropdownMenuItem className="text-red-500 focus:text-red-500">
+          <DropdownMenuItem
+            className="text-red-500 focus:text-red-500"
+            onClick={onOpen}
+          >
             Delete Board
           </DropdownMenuItem>
         </DropdownMenuGroup>

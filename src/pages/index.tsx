@@ -8,6 +8,8 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useSidebar } from "~/lib/hooks/use-sidebar";
 import TaskCard from "~/components/TaskCard";
 import EditTask from "~/components/EditTask";
+import DeleteBoard from "~/components/DeleteBoard";
+import DeleteTask from "~/components/DeleteTask";
 
 export default function Home() {
   const [parent] = useAutoAnimate();
@@ -30,7 +32,7 @@ export default function Home() {
           ) : (
             <button
               onClick={openSidebar}
-              className={`absolute bottom-10 left-0 w-14 rounded-r-full bg-main-color py-3 pl-5 text-white transition-all duration-300 dark:bg-main-background dark:hover:bg-main-color`}
+              className={`absolute bottom-10 left-0 z-20 w-14 rounded-r-full bg-main-color py-3 pl-5 text-white transition-all duration-300 dark:bg-main-background dark:hover:bg-main-color`}
             >
               <Eye className="h-[1.2rem] w-[1.2rem]" />
             </button>
@@ -39,6 +41,8 @@ export default function Home() {
         <Board />
         <TaskCard />
         <EditTask />
+        <DeleteBoard />
+        <DeleteTask />
       </main>
     </>
   );

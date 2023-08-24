@@ -3,6 +3,7 @@ import BoardHeader from "./BoardHeader";
 import TasksGroup from "./TasksGroup";
 import { ScrollArea } from "./ui/scroll-area";
 import { useSidebar } from "~/lib/hooks/use-sidebar";
+import NewColumn from "./NewColumn";
 
 export default function Board() {
   const isSidebarOpen = useSidebar((state) => state.isOpen);
@@ -25,13 +26,12 @@ export default function Board() {
               <TasksGroup />
 
               <TasksGroup />
-              <TasksGroup />
+              {/* <TasksGroup />
 
-              <TasksGroup />
+              <TasksGroup /> */}
             </div>
-            <aside className="mt-9 flex max-h-[813px] min-h-[572.2px] w-[17.5rem] shrink-0 cursor-pointer items-center justify-center rounded-md bg-sky-100/60 text-[1.65rem] font-semibold capitalize text-gray-600 hover:text-main-color dark:bg-main-background/40 dark:text-gray-500 dark:hover:text-main-color">
-              + new column
-            </aside>
+
+            <NewColumn />
           </main>
         </div>
       </ScrollArea>
