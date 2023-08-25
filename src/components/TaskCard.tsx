@@ -4,6 +4,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -29,6 +30,7 @@ import { z } from "zod";
 import { Checkbox } from "./ui/checkbox";
 import TaskSettings from "./TaskSettings";
 import { useTaskDetails } from "~/lib/hooks/use-task-details";
+import { Button } from "./ui/button";
 
 const formSchema = z.object({
   status: z.string(),
@@ -54,7 +56,7 @@ export default function TaskCard() {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       {/* <DialogTrigger asChild>
-        <div className="group cursor-pointer space-y-1 rounded-lg bg-main-background p-4 shadow-sm shadow-indigo-500/20">
+        <div className="p-4 space-y-1 rounded-lg shadow-sm cursor-pointer group bg-main-background shadow-indigo-500/20">
           <h3 className="text-base font-bold tracking-wide text-primary group-hover:text-main-color">
             Build UI for onboarding flow
           </h3>
@@ -123,6 +125,17 @@ export default function TaskCard() {
                 </FormItem>
               )}
             />
+
+            <DialogFooter className="sm:flex-col sm:space-x-0">
+              <Button
+                type="submit"
+                size="full"
+                variant="purple"
+                className="w-full font-bold capitalize"
+              >
+                save changes
+              </Button>
+            </DialogFooter>
           </form>
         </Form>
       </DialogContent>

@@ -10,6 +10,7 @@ import TaskCard from "~/components/TaskCard";
 import EditTask from "~/components/EditTask";
 import DeleteBoard from "~/components/DeleteBoard";
 import DeleteTask from "~/components/DeleteTask";
+import EditBoard from "~/components/EditBoard";
 
 export default function Home() {
   const [parent] = useAutoAnimate();
@@ -43,6 +44,7 @@ export default function Home() {
         <EditTask />
         <DeleteBoard />
         <DeleteTask />
+        <EditBoard />
       </main>
     </>
   );

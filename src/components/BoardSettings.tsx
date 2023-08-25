@@ -9,9 +9,12 @@ import {
   DropdownMenuTrigger,
 } from "src/components/ui/dropdown-menu";
 import { useDeleteBoard } from "~/lib/hooks/use-delete-board";
+import { useEditBoard } from "~/lib/hooks/use-edit-board";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 export default function BoardSettings() {
-  const onOpen = useDeleteBoard((state) => state.onOpen);
+  const onDeleteBoardOpen = useDeleteBoard((state) => state.onOpen);
+  const onEditBoardOpen = useEditBoard((state) => state.onOpen);
 
   return (
     <DropdownMenu>
@@ -19,14 +22,21 @@ export default function BoardSettings() {
         <MoreVertical className="h-7 w-7 cursor-pointer text-gray-400" />
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-44 bg-board-background">
-        <DropdownMenuLabel>Settings</DropdownMenuLabel>
+        <DropdownMenuLabel>
+          <Avatar className="mx-auto">
+            <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+            <AvatarFallback>CN</AvatarFallback>
+          </Avatar>
+        </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem>Edit Board</DropdownMenuItem>
+          <DropdownMenuItem onClick={onEditBoardOpen}>
+            Edit Board
+          </DropdownMenuItem>
 
           <DropdownMenuItem
             className="text-red-500 focus:text-red-500"
-            onClick={onOpen}
+            onClick={onDeleteBoardOpen}
           >
             Delete Board
           </DropdownMenuItem>
