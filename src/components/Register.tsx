@@ -21,32 +21,68 @@ import { Avatar, AvatarFallback, AvatarImage } from "src/components/ui/avatar";
 import { Input } from "src/components/ui/input";
 import * as z from "zod";
 import { Dispatch, SetStateAction } from "react";
+import { registerSchema } from "~/lib/validations/auth";
+import { api } from "~/lib/api";
+import { useToast } from "./ui/use-toast";
+import { Loader2 } from "lucide-react";
 
 interface Props {
   setCurrentCard: Dispatch<SetStateAction<"Login" | "Register">>;
 }
 
-const formSchema = z.object({
-  image: z.string().optional(),
-  email: z.string().email(),
-  password: z
-    .string()
-    .min(4, { message: "Must be 4 or more characters long" })
-    .max(15, { message: "Must be 15 or fewer characters long" }),
-});
-
 export default function Register({ setCurrentCard }: Props) {
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const { toast } = useToast();
+
+  const form = useForm<z.infer<typeof registerSchema>>({
+    resolver: zodResolver(registerSchema),
     defaultValues: {
       image: undefined,
       email: "",
       password: "",
+      name: "",
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  const { mutate: registerUser, isLoading: registeringUser } =
+    api.user.register.useMutation({
+      onSuccess: (data) => {
+        toast({
+          description: data.message,
+        });
+        setCurrentCard("Login");
+      },
+      onError: (err) => {
+        console.log(err);
+        toast({
+          variant: "destructive",
+          description: err.message,
+        });
+      },
+    });
+
+  function onSubmit(values: z.infer<typeof registerSchema>) {
     console.log(values);
+    registerUser(values);
+  }
+
+  function handleImageChange(file: File | undefined) {
+    if (file === undefined) return;
+    const reader = (readFile: File) =>
+      new Promise<string>((resolve) => {
+        const fileReader = new FileReader();
+        fileReader.onload = () => resolve(fileReader.result as string);
+        fileReader.readAsDataURL(readFile);
+      });
+
+    reader(file)
+      .then((result: string) =>
+        form.setValue("image", result, {
+          shouldDirty: true,
+          shouldTouch: true,
+          shouldValidate: true,
+        })
+      )
+      .catch((err) => console.log(err));
   }
 
   return (
@@ -74,11 +110,13 @@ export default function Register({ setCurrentCard }: Props) {
         </div>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <Avatar className="mx-auto h-14 w-14">
-              <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-              <AvatarFallback>CN</AvatarFallback>
-            </Avatar>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+            {form.getValues().image ? (
+              <Avatar className="mx-auto h-14 w-14">
+                <AvatarImage src={form.getValues().image} alt="@shadcn" />
+                <AvatarFallback>CN</AvatarFallback>
+              </Avatar>
+            ) : null}
 
             <FormField
               control={form.control}
@@ -87,8 +125,34 @@ export default function Register({ setCurrentCard }: Props) {
                 <FormItem>
                   <FormLabel>Image</FormLabel>
                   <FormControl>
-                    <Input {...field} type="file" accept="image/*" />
+                    <Input
+                      {...{
+                        ...field,
+                        value: undefined,
+                      }}
+                      onChange={(e) =>
+                        handleImageChange(
+                          e.target.files ? e.target.files[0] : undefined
+                        )
+                      }
+                      type="file"
+                      accept="image/*"
+                    />
                   </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="text" placeholder="John Doe" />
+                  </FormControl>
+                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -125,7 +189,16 @@ export default function Register({ setCurrentCard }: Props) {
               )}
             />
 
-            <Button className="w-full">Register</Button>
+            <Button disabled={registeringUser} className="w-full">
+              {registeringUser ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Registering
+                </>
+              ) : (
+                "Register"
+              )}
+            </Button>
           </form>
         </Form>
       </CardContent>

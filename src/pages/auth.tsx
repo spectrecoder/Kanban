@@ -1,10 +1,12 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { GetServerSidePropsContext } from "next";
 import Head from "next/head";
 import React, { useState } from "react";
 import Login from "~/components/Login";
 import Register from "~/components/Register";
+import { getServerAuthSession } from "~/server/auth";
 
-export default function auth() {
+export default function Auth() {
   const [currentCard, setCurrentCard] = useState<"Login" | "Register">("Login");
   const [parent] = useAutoAnimate();
 
@@ -26,3 +28,23 @@ export default function auth() {
     </>
   );
 }
+
+Auth.isLayout = false;
+
+// export async function getServerSideProps(context: GetServerSidePropsContext) {
+//   const userSession = await getServerAuthSession(context);
+
+//   if (userSession === null) {
+//     return {
+//       props: {},
+//     };
+//   }
+
+//   return {
+//     redirect: {
+//       permanent: false,
+//       destination: "/",
+//     },
+//     props: {},
+//   };
+// }

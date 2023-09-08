@@ -11,6 +11,7 @@ import {
 import { useDeleteBoard } from "~/lib/hooks/use-delete-board";
 import { useEditBoard } from "~/lib/hooks/use-edit-board";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { signOut, useSession } from "next-auth/react";
 
 export default function BoardSettings() {
   const onDeleteBoardOpen = useDeleteBoard((state) => state.onOpen);
@@ -43,7 +44,9 @@ export default function BoardSettings() {
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem>Logout</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => void signOut()}>
+            Logout
+          </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>

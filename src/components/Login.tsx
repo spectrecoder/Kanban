@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Dispatch, SetStateAction } from "react";
+import { signIn } from "next-auth/react";
+import { Dispatch, SetStateAction, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "src/components/ui/button";
 import {
@@ -20,6 +21,8 @@ import {
 } from "src/components/ui/form";
 import { Input } from "src/components/ui/input";
 import * as z from "zod";
+import { useToast } from "./ui/use-toast";
+import { Loader2 } from "lucide-react";
 
 interface Props {
   setCurrentCard: Dispatch<SetStateAction<"Login" | "Register">>;
@@ -34,6 +37,10 @@ const formSchema = z.object({
 });
 
 export default function Login({ setCurrentCard }: Props) {
+  const { toast } = useToast();
+
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -43,7 +50,24 @@ export default function Login({ setCurrentCard }: Props) {
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
+    setIsLoading(true);
     console.log(values);
+    signIn("credentials", { ...values }).then((cb) => {
+      setIsLoading(false);
+
+      if (cb?.ok) {
+        toast({
+          description: "Successfully Logged in",
+        });
+      }
+
+      if (cb?.error) {
+        toast({
+          variant: "destructive",
+          description: "Successfully Logged in",
+        });
+      }
+    });
   }
 
   return (
@@ -56,8 +80,12 @@ export default function Login({ setCurrentCard }: Props) {
       </CardHeader>
       <CardContent className="grid gap-4">
         <div className="grid grid-cols-2 gap-6">
-          <Button variant="purple">Discord</Button>
-          <Button variant="destructive">Google</Button>
+          <Button variant="purple" onClick={() => void signIn("discord")}>
+            Discord
+          </Button>
+          <Button variant="destructive" onClick={() => void signIn("google")}>
+            Google
+          </Button>
         </div>
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
@@ -104,7 +132,16 @@ export default function Login({ setCurrentCard }: Props) {
               )}
             />
 
-            <Button className="w-full">Login</Button>
+            <Button disabled={isLoading} className="w-full">
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Logging in
+                </>
+              ) : (
+                "Log In"
+              )}
+            </Button>
           </form>
         </Form>
       </CardContent>

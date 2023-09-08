@@ -1,9 +1,9 @@
 import { cn } from "~/lib/utils";
-import BoardHeader from "./BoardHeader";
-import TasksGroup from "./TasksGroup";
-import { ScrollArea } from "./ui/scroll-area";
+import BoardHeader from "~/components/BoardHeader";
+import TasksGroup from "~/components/TasksGroup";
+import { ScrollArea } from "~/components/ui/scroll-area";
 import { useSidebar } from "~/lib/hooks/use-sidebar";
-import NewColumn from "./NewColumn";
+import NewColumn from "~/components/NewColumn";
 
 export default function Board() {
   const isSidebarOpen = useSidebar((state) => state.isOpen);
