@@ -23,6 +23,7 @@ import { Input } from "src/components/ui/input";
 import * as z from "zod";
 import { useToast } from "./ui/use-toast";
 import { Loader2 } from "lucide-react";
+import { useRouter } from "next/router";
 
 interface Props {
   setCurrentCard: Dispatch<SetStateAction<"Login" | "Register">>;
@@ -39,6 +40,8 @@ const formSchema = z.object({
 export default function Login({ setCurrentCard }: Props) {
   const { toast } = useToast();
 
+  const router = useRouter();
+
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -52,19 +55,20 @@ export default function Login({ setCurrentCard }: Props) {
   function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     console.log(values);
-    signIn("credentials", { ...values }).then((cb) => {
+    signIn("credentials", { ...values, redirect: false }).then((cb) => {
       setIsLoading(false);
 
       if (cb?.ok) {
         toast({
           description: "Successfully Logged in",
         });
+        router.replace("/");
       }
 
       if (cb?.error) {
         toast({
           variant: "destructive",
-          description: "Successfully Logged in",
+          description: "Invalid credentials",
         });
       }
     });

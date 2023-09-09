@@ -8,6 +8,7 @@ import EditTask from "~/components/EditTask";
 import Sidebar from "~/components/Sidebar";
 import TaskCard from "~/components/TaskCard";
 import { useSidebar } from "~/lib/hooks/use-sidebar";
+import CreateBoard from "./CreateBoard";
 
 interface Props {
   children: JSX.Element;
@@ -40,14 +41,14 @@ export default function Layout({ children }: Props) {
             </button>
           )}
         </section>
-        {/* <Board /> */}
         {children}
 
+        <CreateBoard />
+        <EditBoard />
+        <DeleteBoard />
         <TaskCard />
         <EditTask />
-        <DeleteBoard />
         <DeleteTask />
-        <EditBoard />
       </main>
     </>
   );

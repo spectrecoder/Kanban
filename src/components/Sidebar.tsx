@@ -1,15 +1,16 @@
-import Image from "next/image";
-import { ScrollArea } from "./ui/scroll-area";
-import Link from "next/link";
 import { EyeOff, PanelRight } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useCreateBoard } from "~/lib/hooks/use-create-board";
 import { useSidebar } from "~/lib/hooks/use-sidebar";
-import CreateBoard from "./CreateBoard";
 import ModeToggle from "./ModeToggle";
+import { ScrollArea } from "./ui/scroll-area";
 
 const ACTIVE = true;
 
 export default function Sidebar() {
   const hideSidebar = useSidebar((state) => state.onClose);
+  const openCreateBoard = useCreateBoard((state) => state.onOpen);
 
   return (
     <ScrollArea className="flex h-full w-64 border-0 border-r border-solid border-main-border bg-main-background">
@@ -43,7 +44,15 @@ export default function Sidebar() {
           <p className="text-base font-semibold">Platform Launch</p>
         </Link>
 
-        <CreateBoard />
+        <button
+          onClick={openCreateBoard}
+          className={`mr-6 flex items-center gap-x-4 rounded-r-full py-3 pl-5 text-main-color transition-all duration-300 hover:bg-board-background hover:text-main-color`}
+        >
+          <PanelRight className="h-[1.2rem] w-[1.2rem]" />
+          <p className="text-base font-semibold capitalize">
+            +create new board
+          </p>
+        </button>
 
         <ModeToggle />
         <button
