@@ -1,4 +1,6 @@
 import { MoreVertical } from "lucide-react";
+import { Session } from "next-auth";
+import { signOut } from "next-auth/react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,14 +10,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "src/components/ui/dropdown-menu";
-import { useDeleteBoard } from "~/lib/hooks/use-delete-board";
-import { useEditBoard } from "~/lib/hooks/use-edit-board";
+import { useModal } from "~/lib/hooks/useModal";
+import { avatarFallback } from "~/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { signOut, useSession } from "next-auth/react";
 
-export default function BoardSettings() {
-  const onDeleteBoardOpen = useDeleteBoard((state) => state.onOpen);
-  const onEditBoardOpen = useEditBoard((state) => state.onOpen);
+interface Props {
+  userSession: Session;
+}
+
+export default function BoardSettings({ userSession }: Props) {
+  const onModalOpen = useModal((state) => state.onOpen);
 
   return (
     <DropdownMenu>
@@ -25,19 +29,24 @@ export default function BoardSettings() {
       <DropdownMenuContent className="w-44 bg-board-background">
         <DropdownMenuLabel>
           <Avatar className="mx-auto">
-            <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-            <AvatarFallback>CN</AvatarFallback>
+            <AvatarImage
+              src={userSession.user.image ?? undefined}
+              alt="user avatar"
+            />
+            <AvatarFallback>
+              {avatarFallback(userSession.user.name!)}
+            </AvatarFallback>
           </Avatar>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem onClick={onEditBoardOpen}>
+          <DropdownMenuItem onClick={() => onModalOpen("editBoard")}>
             Edit Board
           </DropdownMenuItem>
 
           <DropdownMenuItem
             className="text-red-500 focus:text-red-500"
-            onClick={onDeleteBoardOpen}
+            onClick={() => onModalOpen("deleteBoard")}
           >
             Delete Board
           </DropdownMenuItem>

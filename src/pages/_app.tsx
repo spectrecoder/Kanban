@@ -8,6 +8,7 @@ import { type ThemeProviderProps } from "next-themes/dist/types";
 import { Toaster } from "~/components/ui/toaster";
 import Layout from "~/components/Layout";
 import { NextPage } from "next";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
   isLayout?: boolean;
@@ -36,6 +37,7 @@ const MyApp = ({
         )}
         <Toaster />
       </NextThemesProvider>
+      <ReactQueryDevtools position="bottom-right" initialIsOpen={false} />
     </SessionProvider>
   );
 };

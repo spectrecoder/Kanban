@@ -1,27 +1,51 @@
+import { Loader2 } from "lucide-react";
+import { useRouter } from "next/router";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "src/components/ui/alert-dialog";
-import { useDeleteBoard } from "~/lib/hooks/use-delete-board";
+import { api } from "~/lib/api";
+import { useModal } from "~/lib/hooks/useModal";
+import { Button } from "./ui/button";
+import { useToast } from "./ui/use-toast";
 
 export default function DeleteBoard() {
-  const [isOpen, onClose] = useDeleteBoard((state) => [
-    state.isOpen,
-    state.onClose,
-  ]);
+  const [type, onClose] = useModal((state) => [state.type, state.onClose]);
+
+  const { toast } = useToast();
+  const router = useRouter();
+  const utils = api.useContext();
+
+  const { mutate: deleteBoard, isLoading } = api.board.deleteBoard.useMutation({
+    onSuccess: (data, variables) => {
+      toast({
+        description: data,
+      });
+      router.push("/");
+      utils.board.getBoards.setData(undefined, (old) => {
+        if (!old) return old;
+        return [...old.filter((b) => b.id !== variables.boardID)];
+      });
+      onClose();
+    },
+    onError: (err) => {
+      console.log(err);
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description:
+          "There was a problem in the server. Please try again later",
+      });
+    },
+  });
 
   return (
-    <AlertDialog open={isOpen} onOpenChange={onClose}>
-      {/* <AlertDialogTrigger asChild>
-        <span>Delete Board</span>
-      </AlertDialogTrigger> */}
+    <AlertDialog open={type === "deleteBoard"} onOpenChange={onClose}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete this board?</AlertDialogTitle>
@@ -31,7 +55,22 @@ export default function DeleteBoard() {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogAction className="flex-grow">Delete</AlertDialogAction>
+          <Button
+            disabled={isLoading}
+            variant="destructive"
+            size="full"
+            onClick={() => deleteBoard({ boardID: router.query.id as string })}
+            className="flex-grow"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Deleting
+              </>
+            ) : (
+              "Delete"
+            )}
+          </Button>
           <AlertDialogCancel className="flex-grow">Cancel</AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialogContent>

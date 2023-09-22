@@ -11,10 +11,14 @@ import {
   CommandList,
 } from "./ui/command";
 import { useRouter } from "next/router";
+import { api } from "~/lib/api";
+import { Loader2 } from "lucide-react";
 
 export default function CommandMenu({ ...props }: DialogProps) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
+
+  const { data: allBoards, isLoading } = api.board.getBoards.useQuery();
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -53,20 +57,27 @@ export default function CommandMenu({ ...props }: DialogProps) {
       <CommandDialog open={open} onOpenChange={setOpen}>
         <CommandInput placeholder="Type a command or search..." />
         <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
-          <CommandGroup heading="Boards">
-            <CommandItem
-              //   key={navItem.href}
-              //   value={navItem.title}
-              onSelect={() => {
-                runCommand(() => router.push("/"));
-              }}
-            >
-              Calendar
-            </CommandItem>
-            <CommandItem>Search Emoji</CommandItem>
-            <CommandItem>Calculator</CommandItem>
-          </CommandGroup>
+          {/* <CommandEmpty>No results found.</CommandEmpty> */}
+          {isLoading ? (
+            <Loader2 className="mx-auto my-3 h-6 w-6 animate-spin" />
+          ) : (
+            <CommandEmpty>No results found.</CommandEmpty>
+          )}
+          {allBoards ? (
+            <CommandGroup heading="Boards">
+              {allBoards.map((b) => (
+                <CommandItem
+                  key={b.id}
+                  value={b.title}
+                  onSelect={() => {
+                    runCommand(() => router.push(`/board/${b.id}`));
+                  }}
+                >
+                  {b.title}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          ) : null}
         </CommandList>
       </CommandDialog>
     </>

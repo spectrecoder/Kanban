@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { COLUMN_COLORS } from "./constants";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -26,4 +27,10 @@ export function avatarFallback(name: string) {
       ? nameArray[0]![0]! + nameArray[1]![0]!
       : nameArray[0]![0]! + nameArray[0]![1]!;
   return fallback.toUpperCase();
+}
+
+export function pickColumnColor(): string {
+  return COLUMN_COLORS[
+    Math.floor(Math.random() * COLUMN_COLORS.length)
+  ] as string;
 }

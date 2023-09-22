@@ -72,6 +72,8 @@ model Board {
     boardColumns BoardColumn[]
     user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId       String        @db.ObjectId
+
+    // @@unique([id, userId])
 }
 
 model BoardColumn {
@@ -87,7 +89,7 @@ model BoardColumn {
 model Task {
     id          String   @id @default(auto()) @map("_id") @db.ObjectId
     title       String
-    Description String?
+    description String?
     createdAt   DateTime @default(now())
 
     subTasks SubTask[]
@@ -99,6 +101,7 @@ model Task {
 model SubTask {
     id        String   @id @default(auto()) @map("_id") @db.ObjectId
     title     String
+    completed Boolean  @default(false)
     createdAt DateTime @default(now())
     Task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
     taskId    String   @db.ObjectId

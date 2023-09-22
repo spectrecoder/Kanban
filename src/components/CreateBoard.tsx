@@ -1,7 +1,8 @@
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import { useRouter } from "next/router";
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import { Button } from "src/components/ui/button";
 import {
   Dialog,
@@ -13,7 +14,8 @@ import {
 import { Input } from "src/components/ui/input";
 import { Label } from "src/components/ui/label";
 import * as z from "zod";
-import { useCreateBoard } from "~/lib/hooks/use-create-board";
+import { api } from "~/lib/api";
+import { useModal } from "~/lib/hooks/useModal";
 import {
   Form,
   FormControl,
@@ -22,37 +24,73 @@ import {
   FormLabel,
   FormMessage,
 } from "./ui/form";
+import { useToast } from "./ui/use-toast";
 
 const formSchema = z.object({
   boardName: z
     .string()
     .min(2, { message: "Must be 2 or more characters long" })
     .max(50, { message: "Must be 50 or fewer characters long" }),
+  boardColumns: z.object({ name: z.string() }).array(),
 });
 
 export default function CreateBoard() {
   const router = useRouter();
+  const [boardColumnsParent] = useAutoAnimate();
+  const { toast } = useToast();
+  const utils = api.useContext();
 
-  const [isOpen, onClose] = useCreateBoard((state) => [
-    state.isOpen,
-    state.onClose,
-  ]);
+  const [onClose, type] = useModal((state) => [state.onClose, state.type]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       boardName: "",
+      boardColumns: [{ name: "" }, { name: "" }],
     },
   });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control, // control props comes from useForm (optional: if you are using FormContext)
+    name: "boardColumns", // unique name for Field Array
+  });
+
+  const { mutate: createBoard, isLoading: creatingBoard } =
+    api.board.create.useMutation({
+      onSuccess: (data) => {
+        toast({
+          description: "Board created",
+        });
+        form.setValue("boardColumns", [{ name: "" }, { name: "" }]);
+        form.setValue("boardName", "");
+        router.push(`/board/${data.id}`);
+        onClose();
+        utils.board.getBoards.setData(undefined, (old) => {
+          if (!old) return old;
+          return [...old, data];
+        });
+      },
+      onError: (err) => {
+        console.log(err);
+        toast({
+          variant: "destructive",
+          description: "Server error. Please try again later",
+        });
+      },
+    });
 
   // 2. Define a submit handler.
   function onSubmit(values: z.infer<typeof formSchema>) {
     // ✅ This will be type-safe and validated.
-    console.log(values);
+    const columns = values.boardColumns
+      .filter((c) => c.name)
+      .map((c) => c.name);
+
+    createBoard({ title: values.boardName, columns });
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={type === "createBoard"} onOpenChange={onClose}>
       <DialogContent className="max-h-[90%] overflow-y-auto bg-main-background scrollbar-none sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Add new board</DialogTitle>
@@ -80,13 +118,31 @@ export default function CreateBoard() {
 
             <fieldset className="grid w-full gap-2.5">
               <Label>Board Columns</Label>
-              <div className="flex items-center gap-x-2">
-                <Input className="cursor-pointer outline-0 ring-offset-0 focus-visible:border-main-color focus-visible:outline-0 focus-visible:ring-0 focus-visible:ring-offset-0" />
-                <X className="h-7 w-7 cursor-pointer text-gray-400" />
-              </div>
-              <div className="flex items-center gap-x-2">
-                <Input className="cursor-pointer outline-0 ring-offset-0 focus-visible:border-main-color focus-visible:outline-0 focus-visible:ring-0 focus-visible:ring-offset-0" />
-                <X className="h-7 w-7 cursor-pointer text-gray-400" />
+              <div ref={boardColumnsParent} className="space-y-2.5">
+                {fields.map((bc, idx) => (
+                  <FormField
+                    key={bc.id}
+                    control={form.control}
+                    name={`boardColumns.${idx}.name`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <div className="flex items-center gap-x-2">
+                            <Input
+                              {...field}
+                              className="cursor-pointer outline-0 ring-offset-0 focus-visible:border-main-color focus-visible:outline-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                            />
+                            <X
+                              onClick={() => remove(idx)}
+                              className="h-7 w-7 cursor-pointer text-gray-400"
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                ))}
               </div>
             </fieldset>
 
@@ -95,18 +151,26 @@ export default function CreateBoard() {
                 type="button"
                 size="full"
                 className="font-bold capitalize text-white dark:text-main-color"
+                onClick={() => append({ name: "" })}
               >
                 + add new column
               </Button>
 
               <Button
-                onClick={() => router.push("/board/123")}
                 type="submit"
                 size="full"
                 variant="purple"
+                disabled={creatingBoard}
                 className="mt-6 w-full font-bold capitalize"
               >
-                create new board
+                {creatingBoard ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating
+                  </>
+                ) : (
+                  "Create new board"
+                )}
               </Button>
             </DialogFooter>
           </form>
@@ -114,4 +178,24 @@ export default function CreateBoard() {
       </DialogContent>
     </Dialog>
   );
+}
+
+{
+  /* <fieldset className="grid w-full gap-2.5">
+              <Label>Board Columns</Label>
+              <div className="space-y-2.5">
+                {fields.map((bc, idx) => (
+                  <div key={bc.id} className="flex items-center gap-x-2">
+                    <Input
+                      {...form.register(`boardColumns.${idx}.name`)}
+                      className="cursor-pointer outline-0 ring-offset-0 focus-visible:border-main-color focus-visible:outline-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                    />
+                    <X
+                      onClick={() => remove(idx)}
+                      className="text-gray-400 cursor-pointer h-7 w-7"
+                    />
+                  </div>
+                ))}
+              </div>
+            </fieldset> */
 }
