@@ -39,6 +39,19 @@ async function getBoardDetails({
             select: {
               id: true,
               title: true,
+              subTasks: {
+                where: {
+                  completed: true,
+                },
+                select: {
+                  id: true,
+                },
+              },
+              _count: {
+                select: {
+                  subTasks: true,
+                },
+              },
             },
           },
         },
@@ -207,6 +220,19 @@ export const boardRouter = createTRPCRouter({
                     select: {
                       id: true,
                       title: true,
+                      subTasks: {
+                        where: {
+                          completed: true,
+                        },
+                        select: {
+                          id: true,
+                        },
+                      },
+                      _count: {
+                        select: {
+                          subTasks: true,
+                        },
+                      },
                     },
                   },
                 },

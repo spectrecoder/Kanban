@@ -21,7 +21,7 @@ import {
 import { Input } from "src/components/ui/input";
 import { Label } from "src/components/ui/label";
 import * as z from "zod";
-import { api } from "~/lib/api";
+import { RouterOutputs, api } from "~/lib/api";
 import { useEditBoard } from "~/lib/hooks/use-edit-board";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
@@ -40,18 +40,29 @@ const formSchema = z.object({
     .array(),
 });
 
-export default function EditBoard() {
+interface Props {
+  boardDetails: Pick<
+    RouterOutputs["board"]["getSingleBoard"],
+    "id" | "title"
+  > & {
+    boardColumns: Pick<
+      RouterOutputs["board"]["getSingleBoard"]["boardColumns"][number],
+      "id" | "title"
+    >[];
+  };
+}
+
+export default function EditBoard({ boardDetails }: Props) {
   const [type, onClose] = useModal((state) => [state.type, state.onClose]);
 
   const [boardColumnsParent] = useAutoAnimate();
 
-  const router = useRouter();
   const utils = api.useContext();
   const { toast } = useToast();
 
   const { mutate: editBoard, isLoading: editingBoard } =
     api.board.updateBoard.useMutation({
-      onSuccess: (data) => {
+      onSuccess: (data, variables) => {
         toast({
           description: "Updated board",
         });
@@ -68,6 +79,16 @@ export default function EditBoard() {
             };
           }
         );
+        if (variables.title) {
+          utils.board.getBoards.setData(undefined, (old) => {
+            if (!old) return old;
+            return [
+              ...old.map((b) =>
+                b.id === data.id ? { ...b, title: data.title } : b
+              ),
+            ];
+          });
+        }
         onClose();
       },
       onError: (err) => {
@@ -78,14 +99,6 @@ export default function EditBoard() {
         });
       },
     });
-
-  const {
-    data: boardDetails,
-    isLoading,
-    error,
-  } = api.board.getSingleBoard.useQuery({
-    boardID: router.query.id as string,
-  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -115,14 +128,8 @@ export default function EditBoard() {
     form.setValue("boardName", boardDetails.title);
   }, [boardDetails?.title]);
 
-  if (error) {
-    console.log(error);
-  }
-
   function onSubmit(values: z.infer<typeof formSchema>) {
     if (!boardDetails) return;
-
-    console.log(values);
 
     const filterOutEmptyInputs = values.boardColumns.filter((bc) => !!bc.name);
 
@@ -158,7 +165,7 @@ export default function EditBoard() {
       return onClose();
 
     editBoard({
-      boardID: router.query.id as string,
+      boardID: boardDetails.id,
       title:
         values.boardName === boardDetails.title ? undefined : values.boardName,
       deleteColumns,
@@ -174,118 +181,86 @@ export default function EditBoard() {
           <DialogTitle>Edit board</DialogTitle>
         </DialogHeader>
 
-        {isLoading ? (
-          <Loader2 className="mx-auto h-6 w-6 animate-spin" />
-        ) : boardDetails ? (
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="boardName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Board name</FormLabel>
-                    <FormControl>
-                      <Input
-                        // defaultValue={boardDetails.title}
-                        placeholder="e.g. Wandering Maniac"
-                        // {...{ ...field, value: undefined }}
-                        {...field}
-                        className="cursor-pointer outline-0 ring-offset-0 focus-visible:border-main-color focus-visible:outline-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <fieldset className="grid w-full gap-2.5">
-                <Label>Board Columns</Label>
-                <div ref={boardColumnsParent} className="space-y-2.5">
-                  {fields.map((bc, idx) => (
-                    <FormField
-                      key={bc.id}
-                      control={form.control}
-                      name={`boardColumns.${idx}.name`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <div className="flex items-center gap-x-2">
-                              <Input
-                                // defaultValue={bc.name}
-                                // {...{ ...field, value: undefined }}
-                                {...field}
-                                className="cursor-pointer outline-0 ring-offset-0 focus-visible:border-main-color focus-visible:outline-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                              />
-                              <X
-                                onClick={() => remove(idx)}
-                                className="h-7 w-7 cursor-pointer text-gray-400"
-                              />
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="boardName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Board name</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="e.g. Wandering Maniac"
+                      {...field}
+                      className="cursor-pointer outline-0 ring-offset-0 focus-visible:border-main-color focus-visible:outline-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                     />
-                  ))}
-                </div>
-              </fieldset>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
+            <fieldset className="grid w-full gap-2.5">
+              <Label>Board Columns</Label>
+              <div ref={boardColumnsParent} className="space-y-2.5">
+                {fields.map((bc, idx) => (
+                  <FormField
+                    key={bc.id}
+                    control={form.control}
+                    name={`boardColumns.${idx}.name`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <div className="flex items-center gap-x-2">
+                            <Input
+                              {...field}
+                              className="cursor-pointer outline-0 ring-offset-0 focus-visible:border-main-color focus-visible:outline-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                            />
+                            <X
+                              onClick={() => remove(idx)}
+                              className="h-7 w-7 cursor-pointer text-gray-400"
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                ))}
+              </div>
+            </fieldset>
+
+            <Button
+              onClick={() => append({ name: "" })}
+              type="button"
+              size="full"
+              className="w-full font-bold capitalize text-white dark:text-main-color"
+            >
+              + add new column
+            </Button>
+
+            <DialogFooter className="sm:flex-col sm:space-x-0">
               <Button
-                onClick={() => append({ name: "" })}
-                type="button"
+                type="submit"
                 size="full"
-                className="w-full font-bold capitalize text-white dark:text-main-color"
+                variant="purple"
+                disabled={editingBoard}
+                className="w-full font-bold capitalize"
               >
-                + add new column
+                {editingBoard ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    saving
+                  </>
+                ) : (
+                  "save changes"
+                )}
               </Button>
-
-              <DialogFooter className="sm:flex-col sm:space-x-0">
-                <Button
-                  type="submit"
-                  size="full"
-                  variant="purple"
-                  disabled={editingBoard}
-                  className="w-full font-bold capitalize"
-                >
-                  {editingBoard ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      saving
-                    </>
-                  ) : (
-                    "save changes"
-                  )}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        ) : (
-          <Alert variant="destructive" className="h-fit bg-board-background">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>
-              Something went wrong. Please try again later.
-            </AlertDescription>
-          </Alert>
-        )}
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
 }
-
-// useEffect(() => {
-//   const testFn = () => {
-//     utils.board.getSingleBoard.setData(
-//       {
-//         boardID: router.query.id as string,
-//       },
-//       (old) => {
-//         if (!old) return old;
-//         return { ...old, title: "changed" };
-//       }
-//     );
-//   };
-
-//   const timer = setTimeout(testFn, 1000);
-// }, []);

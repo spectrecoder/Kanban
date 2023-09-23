@@ -14,7 +14,11 @@ import { useModal } from "~/lib/hooks/useModal";
 import { Button } from "./ui/button";
 import { useToast } from "./ui/use-toast";
 
-export default function DeleteBoard() {
+interface Props {
+  boardTitle: string;
+}
+
+export default function DeleteBoard({ boardTitle }: Props) {
   const [type, onClose] = useModal((state) => [state.type, state.onClose]);
 
   const { toast } = useToast();
@@ -50,7 +54,7 @@ export default function DeleteBoard() {
         <AlertDialogHeader>
           <AlertDialogTitle>Delete this board?</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete the "Platform Launch" board? This
+            Are you sure you want to delete the "{boardTitle}" board? This
             action will remove all columns and tasks and cannot be reversed.
           </AlertDialogDescription>
         </AlertDialogHeader>

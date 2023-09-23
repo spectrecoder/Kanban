@@ -14,6 +14,7 @@ export const taskRouter = createTRPCRouter({
         title: z.string().min(1),
         description: z.string().optional(),
         columnId: z.string().min(6),
+        subtasks: z.object({ title: z.string() }).array(),
       })
     )
     .mutation(async ({ ctx: { prisma, session }, input }) => {
@@ -38,11 +39,23 @@ export const taskRouter = createTRPCRouter({
                 id: input.columnId,
               },
             },
+            subTasks: {
+              createMany: {
+                data: input.subtasks,
+              },
+            },
           },
           select: {
             id: true,
             title: true,
-            description: true,
+            subTasks: {
+              where: {
+                completed: true,
+              },
+              select: {
+                id: true,
+              },
+            },
             _count: {
               select: {
                 subTasks: true,
@@ -79,6 +92,27 @@ export const taskRouter = createTRPCRouter({
                 id: true,
                 title: true,
                 completed: true,
+              },
+            },
+          },
+        });
+      } catch (err) {
+        console.log(err);
+        throw new TRPCError(formatError(err));
+      }
+    }),
+  deleteTask: protectedProcedure
+    .input(z.object({ taskId: z.string() }))
+    .mutation(async ({ ctx: { prisma, session }, input }) => {
+      try {
+        return await prisma.task.delete({
+          where: {
+            id: input.taskId,
+            boardColumn: {
+              board: {
+                user: {
+                  id: session.user.id,
+                },
               },
             },
           },

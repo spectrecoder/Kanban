@@ -7,21 +7,14 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "src/components/ui/alert-dialog";
-import { useDeleteTask } from "~/lib/hooks/use-delete-task";
+import { useModal } from "~/lib/hooks/useModal";
 
 export default function DeleteTask() {
-  const [isOpen, onClose] = useDeleteTask((state) => [
-    state.isOpen,
-    state.onClose,
-  ]);
+  const [type, onClose] = useModal((state) => [state.type, state.onClose]);
 
   return (
-    <AlertDialog open={isOpen} onOpenChange={onClose}>
-      {/* <AlertDialogTrigger asChild>
-        <span>Delete Board</span>
-      </AlertDialogTrigger> */}
+    <AlertDialog open={type === "deleteTask"} onOpenChange={onClose}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete this task?</AlertDialogTitle>

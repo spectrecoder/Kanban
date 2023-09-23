@@ -1,4 +1,7 @@
-import { X } from "lucide-react";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2, X } from "lucide-react";
+import { useFieldArray, useForm } from "react-hook-form";
 import { Button } from "src/components/ui/button";
 import {
   Dialog,
@@ -6,17 +9,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "src/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "src/components/ui/select";
 import {
   Form,
   FormControl,
@@ -27,10 +20,28 @@ import {
 } from "src/components/ui/form";
 import { Input } from "src/components/ui/input";
 import { Label } from "src/components/ui/label";
-import { Textarea } from "./ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "src/components/ui/select";
 import * as z from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { RouterOutputs, api } from "~/lib/api";
+import { useModal } from "~/lib/hooks/useModal";
+import { Textarea } from "./ui/textarea";
+import { useToast } from "./ui/use-toast";
+
+interface Props {
+  columns: Pick<
+    RouterOutputs["board"]["getSingleBoard"]["boardColumns"][number],
+    "id" | "title"
+  >[];
+  boardId: string;
+}
 
 const formSchema = z.object({
   taskName: z
@@ -42,35 +53,80 @@ const formSchema = z.object({
     .max(150, { message: "Must be 150 or fewer characters long" })
     .optional(),
   status: z.string(),
+  subtasks: z.object({ title: z.string() }).array(),
 });
 
-export default function CreateTask() {
+export default function CreateTask({ columns, boardId }: Props) {
+  const [type, onClose] = useModal((state) => [state.type, state.onClose]);
+  const [subtasksParent] = useAutoAnimate();
+  const { toast } = useToast();
+  const utils = api.useContext();
+
+  const { mutate: createTask, isLoading: creatingTask } =
+    api.task.create.useMutation({
+      onSuccess: (data, variables) => {
+        toast({
+          description: "Task created",
+        });
+        form.setValue("subtasks", [{ title: "" }, { title: "" }]);
+        form.setValue("taskName", "");
+        form.setValue("description", "");
+        onClose();
+        utils.board.getSingleBoard.setData(
+          {
+            boardID: boardId,
+          },
+          (old) => {
+            if (!old) return old;
+            return {
+              ...old,
+              boardColumns: [
+                ...old.boardColumns.map((b) =>
+                  b.id === variables.columnId
+                    ? { ...b, tasks: [...b.tasks, data] }
+                    : b
+                ),
+              ],
+            };
+          }
+        );
+      },
+      onError: (err) => {
+        console.log(err);
+        toast({
+          variant: "destructive",
+          description: "Server error. Please try again later",
+        });
+      },
+    });
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       taskName: "",
       description: "",
-      status: "todo",
+      status: columns[0]?.id,
+      subtasks: [{ title: "" }, { title: "" }],
     },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control, // control props comes from useForm (optional: if you are using FormContext)
+    name: "subtasks", // unique name for Field Array
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
+    createTask({
+      title: values.taskName,
+      description: values.description,
+      columnId: values.status,
+      subtasks: values.subtasks,
+    });
   }
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button
-          type="button"
-          size="full"
-          variant="purple"
-          className="h-12 px-5 text-base font-semibold capitalize"
-        >
-          + add new task
-        </Button>
-      </DialogTrigger>
-
+    <Dialog open={type === "createTask"} onOpenChange={onClose}>
       <DialogContent className="max-h-[90%] overflow-y-auto bg-main-background scrollbar-none sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Add new task</DialogTitle>
@@ -116,17 +172,36 @@ export default function CreateTask() {
 
             <fieldset className="grid w-full gap-2.5">
               <Label>Subtasks</Label>
-              <div className="flex items-center gap-x-2">
-                <Input className="cursor-pointer outline-0 ring-offset-0 focus-visible:border-main-color focus-visible:outline-0 focus-visible:ring-0 focus-visible:ring-offset-0" />
-                <X className="h-7 w-7 cursor-pointer text-gray-400" />
-              </div>
-              <div className="flex items-center gap-x-2">
-                <Input className="cursor-pointer outline-0 ring-offset-0 focus-visible:border-main-color focus-visible:outline-0 focus-visible:ring-0 focus-visible:ring-offset-0" />
-                <X className="h-7 w-7 cursor-pointer text-gray-400" />
+              <div ref={subtasksParent} className="space-y-2.5">
+                {fields.map((st, idx) => (
+                  <FormField
+                    key={st.id}
+                    control={form.control}
+                    name={`subtasks.${idx}.title`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <div className="flex items-center gap-x-2">
+                            <Input
+                              {...field}
+                              className="cursor-pointer outline-0 ring-offset-0 focus-visible:border-main-color focus-visible:outline-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                            />
+                            <X
+                              onClick={() => remove(idx)}
+                              className="h-7 w-7 cursor-pointer text-gray-400"
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                ))}
               </div>
             </fieldset>
 
             <Button
+              onClick={() => append({ title: "" })}
               type="button"
               size="full"
               className="w-full font-bold capitalize text-white dark:text-main-color"
@@ -140,7 +215,10 @@ export default function CreateTask() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Current Status</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue="todo">
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={columns[0]?.id}
+                  >
                     <FormControl>
                       <SelectTrigger className="w-full outline-0 ring-offset-0 focus:border-main-color focus:outline-0 focus:ring-0 focus:ring-offset-0">
                         <SelectValue placeholder="Select a status" />
@@ -149,9 +227,11 @@ export default function CreateTask() {
                     <SelectContent>
                       <SelectGroup>
                         <SelectLabel>Status</SelectLabel>
-                        <SelectItem value="todo">Todo</SelectItem>
-                        <SelectItem value="doing">Doing</SelectItem>
-                        <SelectItem value="done">Done</SelectItem>
+                        {columns.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.title}
+                          </SelectItem>
+                        ))}
                       </SelectGroup>
                     </SelectContent>
                   </Select>
@@ -162,12 +242,20 @@ export default function CreateTask() {
 
             <DialogFooter className="sm:flex-col sm:space-x-0">
               <Button
+                disabled={creatingTask}
                 type="submit"
                 size="full"
                 variant="purple"
                 className="w-full font-bold capitalize"
               >
-                create task
+                {creatingTask ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    creating
+                  </>
+                ) : (
+                  "create task"
+                )}
               </Button>
             </DialogFooter>
           </form>

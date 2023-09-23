@@ -1,4 +1,6 @@
+import { zodResolver } from "@hookform/resolvers/zod";
 import { X } from "lucide-react";
+import { useForm } from "react-hook-form";
 import { Button } from "src/components/ui/button";
 import {
   Dialog,
@@ -6,17 +8,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "src/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "src/components/ui/select";
 import {
   Form,
   FormControl,
@@ -27,11 +19,18 @@ import {
 } from "src/components/ui/form";
 import { Input } from "src/components/ui/input";
 import { Label } from "src/components/ui/label";
-import { Textarea } from "./ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "src/components/ui/select";
 import * as z from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { useEditTask } from "~/lib/hooks/use-edit-task";
+import { useModal } from "~/lib/hooks/useModal";
+import { Textarea } from "./ui/textarea";
 
 const formSchema = z.object({
   taskName: z
@@ -46,10 +45,7 @@ const formSchema = z.object({
 });
 
 export default function EditTask() {
-  const [isOpen, onClose] = useEditTask((state) => [
-    state.isOpen,
-    state.onClose,
-  ]);
+  const [type, onClose] = useModal((state) => [state.type, state.onClose]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -65,14 +61,10 @@ export default function EditTask() {
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      {/* <DialogTrigger asChild>
-        <span>Edit Task</span>
-      </DialogTrigger> */}
-
+    <Dialog open={type === "editTask"} onOpenChange={onClose}>
       <DialogContent className="max-h-[90%] overflow-y-auto bg-main-background scrollbar-none sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add new task</DialogTitle>
+          <DialogTitle>Edit task</DialogTitle>
         </DialogHeader>
 
         <Form {...form}>

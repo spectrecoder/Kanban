@@ -31,7 +31,10 @@ const formSchema = z.object({
     .string()
     .min(2, { message: "Must be 2 or more characters long" })
     .max(50, { message: "Must be 50 or fewer characters long" }),
-  boardColumns: z.object({ name: z.string() }).array(),
+  boardColumns: z
+    .object({ name: z.string() })
+    .array()
+    .transform((value) => value.filter((c) => c.name)),
 });
 
 export default function CreateBoard() {
@@ -82,10 +85,7 @@ export default function CreateBoard() {
   // 2. Define a submit handler.
   function onSubmit(values: z.infer<typeof formSchema>) {
     // ✅ This will be type-safe and validated.
-    const columns = values.boardColumns
-      .filter((c) => c.name)
-      .map((c) => c.name);
-
+    const columns = values.boardColumns.map((c) => c.name);
     createBoard({ title: values.boardName, columns });
   }
 
@@ -178,24 +178,4 @@ export default function CreateBoard() {
       </DialogContent>
     </Dialog>
   );
-}
-
-{
-  /* <fieldset className="grid w-full gap-2.5">
-              <Label>Board Columns</Label>
-              <div className="space-y-2.5">
-                {fields.map((bc, idx) => (
-                  <div key={bc.id} className="flex items-center gap-x-2">
-                    <Input
-                      {...form.register(`boardColumns.${idx}.name`)}
-                      className="cursor-pointer outline-0 ring-offset-0 focus-visible:border-main-color focus-visible:outline-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                    />
-                    <X
-                      onClick={() => remove(idx)}
-                      className="text-gray-400 cursor-pointer h-7 w-7"
-                    />
-                  </div>
-                ))}
-              </div>
-            </fieldset> */
 }

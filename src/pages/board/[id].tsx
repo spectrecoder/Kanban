@@ -14,6 +14,9 @@ import { api } from "~/lib/api";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import CreateTask from "~/components/CreateTask";
+import EditBoard from "~/components/EditBoard";
+import DeleteBoard from "~/components/DeleteBoard";
 
 export default function Board({
   userSession,
@@ -43,29 +46,56 @@ export default function Board({
   }
 
   return (
-    <section className="flex-grow bg-board-background">
-      <BoardHeader boardName={currentBoard.title} userSession={userSession} />
+    <>
+      <section className="flex-grow bg-board-background">
+        <BoardHeader
+          hasColumns={!!currentBoard.boardColumns.length}
+          boardName={currentBoard.title}
+          userSession={userSession}
+        />
 
-      <ScrollArea
-        direction="horizontal"
-        className={cn(
-          "w-[calc(100vw-16rem)] max-w-[calc(100vw-16rem)] transition-all duration-300",
-          !isSidebarOpen && "w-screen max-w-[100vw]"
-        )}
-      >
-        <div className="flex h-[calc(100vh-76.8px)] gap-x-6 overflow-y-auto p-5 scrollbar-none">
-          <main className="flex h-fit gap-x-6">
-            <div className="flex h-full gap-x-6" ref={boardColumnsParent}>
-              {currentBoard.boardColumns.map((bc) => (
-                <TasksGroup key={bc.id} boardColumn={bc} />
-              ))}
-            </div>
+        <ScrollArea
+          direction="horizontal"
+          className={cn(
+            "w-[calc(100vw-16rem)] max-w-[calc(100vw-16rem)] transition-all duration-300",
+            !isSidebarOpen && "w-screen max-w-[100vw]"
+          )}
+        >
+          <div className="flex h-[calc(100vh-76.8px)] gap-x-6 overflow-y-auto p-5 scrollbar-none">
+            <main className="flex h-fit gap-x-6">
+              <div className="flex h-full gap-x-6" ref={boardColumnsParent}>
+                {currentBoard.boardColumns.map((bc) => (
+                  <TasksGroup key={bc.id} boardColumn={bc} />
+                ))}
+              </div>
 
-            <NewColumn />
-          </main>
-        </div>
-      </ScrollArea>
-    </section>
+              <NewColumn />
+            </main>
+          </div>
+        </ScrollArea>
+      </section>
+
+      <CreateTask
+        boardId={currentBoard.id}
+        columns={currentBoard.boardColumns.map((c) => ({
+          id: c.id,
+          title: c.title,
+        }))}
+      />
+
+      <EditBoard
+        boardDetails={{
+          title: currentBoard.title,
+          id: currentBoard.id,
+          boardColumns: currentBoard.boardColumns.map((c) => ({
+            id: c.id,
+            title: c.title,
+          })),
+        }}
+      />
+
+      <DeleteBoard boardTitle={currentBoard.title} />
+    </>
   );
 }
 

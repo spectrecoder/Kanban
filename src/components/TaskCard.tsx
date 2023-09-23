@@ -31,16 +31,14 @@ import { Checkbox } from "./ui/checkbox";
 import TaskSettings from "./TaskSettings";
 import { useTaskDetails } from "~/lib/hooks/use-task-details";
 import { Button } from "./ui/button";
+import { useModal } from "~/lib/hooks/useModal";
 
 const formSchema = z.object({
   status: z.string(),
 });
 
 export default function TaskCard() {
-  const [isOpen, onClose] = useTaskDetails((state) => [
-    state.isOpen,
-    state.onClose,
-  ]);
+  const [type, onClose] = useModal((state) => [state.type, state.onClose]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -54,15 +52,7 @@ export default function TaskCard() {
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      {/* <DialogTrigger asChild>
-        <div className="p-4 space-y-1 rounded-lg shadow-sm cursor-pointer group bg-main-background shadow-indigo-500/20">
-          <h3 className="text-base font-bold tracking-wide text-primary group-hover:text-main-color">
-            Build UI for onboarding flow
-          </h3>
-          <p className="text-xs font-semibold text-gray-500">0 of 3 subtasks</p>
-        </div>
-      </DialogTrigger> */}
+    <Dialog open={type === "taskDetails"} onOpenChange={onClose}>
       <DialogContent className="max-h-[90%] overflow-y-auto bg-main-background scrollbar-none sm:max-w-[425px]">
         <header className="flex items-center justify-between gap-x-2">
           <DialogHeader>

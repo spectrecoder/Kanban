@@ -12,6 +12,7 @@ import CreateBoard from "./CreateBoard";
 import LoadingBar from "react-top-loading-bar";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import CreateTask from "./CreateTask";
 
 interface Props {
   children: JSX.Element;
@@ -78,9 +79,10 @@ export default function Layout({ children }: Props) {
 
         {/* <CreateBoard key={crypto.randomUUID()} /> */}
         <CreateBoard />
-        <EditBoard />
-        <DeleteBoard />
+        {/* <EditBoard /> */}
+        {/* <DeleteBoard /> */}
         <TaskCard />
+        {/* <CreateTask /> */}
         <EditTask />
         <DeleteTask />
       </main>
