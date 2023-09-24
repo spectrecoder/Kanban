@@ -69,10 +69,10 @@ export const taskRouter = createTRPCRouter({
       }
     }),
   getTaskDetail: protectedProcedure
-    .input(z.object({ taskId: z.string(), columnId: z.string() }))
+    .input(z.object({ taskId: z.string(), boardId: z.string() }))
     .query(async ({ ctx: { prisma, session }, input }) => {
       try {
-        return await prisma.task.findUniqueOrThrow({
+        const taskDetail = await prisma.task.findUniqueOrThrow({
           where: {
             id: input.taskId,
             boardColumn: {
@@ -96,6 +96,22 @@ export const taskRouter = createTRPCRouter({
             },
           },
         });
+
+        const columns = await prisma.board.findUniqueOrThrow({
+          where: {
+            id: input.boardId,
+          },
+          select: {
+            boardColumns: {
+              select: {
+                id: true,
+                title: true,
+              },
+            },
+          },
+        });
+
+        return { taskDetail, columns };
       } catch (err) {
         console.log(err);
         throw new TRPCError(formatError(err));
@@ -113,6 +129,13 @@ export const taskRouter = createTRPCRouter({
                 user: {
                   id: session.user.id,
                 },
+              },
+            },
+          },
+          select: {
+            boardColumn: {
+              select: {
+                id: true,
               },
             },
           },

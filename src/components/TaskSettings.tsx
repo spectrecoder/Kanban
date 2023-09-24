@@ -15,7 +15,7 @@ export default function TaskSettings() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <MoreVertical className="h-7 w-7 cursor-pointer text-gray-400" />
+        <MoreVertical className="h-6 w-6 cursor-pointer text-gray-400" />
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-44 bg-board-background">
         <DropdownMenuLabel>Actions</DropdownMenuLabel>

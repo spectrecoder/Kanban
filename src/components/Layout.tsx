@@ -81,10 +81,10 @@ export default function Layout({ children }: Props) {
         <CreateBoard />
         {/* <EditBoard /> */}
         {/* <DeleteBoard /> */}
-        <TaskCard />
+        {/* <TaskCard /> */}
         {/* <CreateTask /> */}
         <EditTask />
-        <DeleteTask />
+        {/* <DeleteTask /> */}
       </main>
     </>
   );
