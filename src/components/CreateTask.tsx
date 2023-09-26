@@ -53,7 +53,10 @@ const formSchema = z.object({
     .max(150, { message: "Must be 150 or fewer characters long" })
     .optional(),
   status: z.string(),
-  subtasks: z.object({ title: z.string() }).array(),
+  subtasks: z
+    .object({ title: z.string() })
+    .array()
+    .transform((values) => values.filter((v) => v.title)),
 });
 
 export default function CreateTask({ columns, boardId }: Props) {

@@ -94,6 +94,11 @@ export const taskRouter = createTRPCRouter({
                 completed: true,
               },
             },
+            boardColumn: {
+              select: {
+                id: true,
+              },
+            },
           },
         });
 
@@ -111,7 +116,82 @@ export const taskRouter = createTRPCRouter({
           },
         });
 
-        return { taskDetail, columns };
+        return { taskDetail, ...columns };
+      } catch (err) {
+        console.log(err);
+        throw new TRPCError(formatError(err));
+      }
+    }),
+  saveTaskDetail: protectedProcedure
+    .input(
+      z.object({
+        taskId: z.string(),
+        columnId: z.string().optional(),
+        subtasks: z
+          .object({ completed: z.boolean(), id: z.string(), title: z.string() })
+          .array(),
+      })
+    )
+    .mutation(async ({ ctx: { prisma, session }, input }) => {
+      try {
+        return await prisma.$transaction(async (tx) => {
+          if (input.subtasks.length) {
+            await Promise.all(
+              input.subtasks.map((st) =>
+                tx.subTask.update({
+                  where: {
+                    id: st.id,
+                    Task: {
+                      id: input.taskId,
+                    },
+                  },
+                  data: {
+                    completed: st.completed,
+                  },
+                })
+              )
+            );
+          }
+
+          const saveTask = await tx.task.update({
+            where: {
+              id: input.taskId,
+              boardColumn: {
+                board: {
+                  user: {
+                    id: session.user.id,
+                  },
+                },
+              },
+            },
+            data: {
+              boardColumn: input.columnId
+                ? {
+                    connect: {
+                      id: input.columnId,
+                    },
+                  }
+                : undefined,
+            },
+            select: {
+              id: true,
+              subTasks: {
+                select: {
+                  id: true,
+                  completed: true,
+                  title: true,
+                },
+              },
+              boardColumn: {
+                select: {
+                  id: true,
+                },
+              },
+            },
+          });
+
+          return saveTask;
+        });
       } catch (err) {
         console.log(err);
         throw new TRPCError(formatError(err));

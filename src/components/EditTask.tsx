@@ -31,6 +31,14 @@ import {
 import * as z from "zod";
 import { useModal } from "~/lib/hooks/useModal";
 import { Textarea } from "./ui/textarea";
+import { Dispatch, SetStateAction } from "react";
+import { RouterOutputs } from "~/lib/api";
+
+interface Props {
+  open: boolean;
+  setOpen: Dispatch<SetStateAction<boolean>>;
+  taskDetail: RouterOutputs["task"]["getTaskDetail"]["taskDetail"] | undefined;
+}
 
 const formSchema = z.object({
   taskName: z
@@ -44,9 +52,7 @@ const formSchema = z.object({
   status: z.string(),
 });
 
-export default function EditTask() {
-  const [type, onClose] = useModal((state) => [state.type, state.onClose]);
-
+export default function EditTask({ open, setOpen, taskDetail }: Props) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -61,7 +67,7 @@ export default function EditTask() {
   }
 
   return (
-    <Dialog open={type === "editTask"} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-h-[90%] overflow-y-auto bg-main-background scrollbar-none sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Edit task</DialogTitle>

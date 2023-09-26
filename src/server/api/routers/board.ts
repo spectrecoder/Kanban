@@ -172,9 +172,7 @@ export const boardRouter = createTRPCRouter({
                   where: {
                     id: c.columnID,
                     board: {
-                      user: {
-                        id: session.user.id,
-                      },
+                      id: input.boardID,
                     },
                   },
                   data: {

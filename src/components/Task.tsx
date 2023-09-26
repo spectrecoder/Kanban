@@ -8,7 +8,6 @@ interface TaskProps {
 }
 
 export default function Task({ task }: TaskProps) {
-  const [openDeleteModal, setOpenDeleteModal] = useState<boolean>(false);
   const [openDetailModal, setOpenDetailModal] = useState<boolean>(false);
 
   return (
@@ -26,17 +25,11 @@ export default function Task({ task }: TaskProps) {
         </p>
       </div>
 
-      <DeleteTask
-        open={openDeleteModal}
-        setOpen={setOpenDeleteModal}
-        taskTitle={task.title}
-        taskId={task.id}
-      />
-
       <TaskCard
         open={openDetailModal}
         setOpen={setOpenDetailModal}
         taskId={task.id}
+        taskTitle={task.title}
       />
     </>
   );

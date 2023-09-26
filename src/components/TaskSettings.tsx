@@ -1,4 +1,5 @@
 import { MoreVertical } from "lucide-react";
+import { Dispatch, SetStateAction } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,7 +10,15 @@ import {
 } from "src/components/ui/dropdown-menu";
 import { useModal } from "~/lib/hooks/useModal";
 
-export default function TaskSettings() {
+interface Props {
+  setOpenDeleteModal: Dispatch<SetStateAction<boolean>>;
+  setOpenEditModal: Dispatch<SetStateAction<boolean>>;
+}
+
+export default function TaskSettings({
+  setOpenDeleteModal,
+  setOpenEditModal,
+}: Props) {
   const onOpen = useModal((state) => state.onOpen);
 
   return (
@@ -20,11 +29,11 @@ export default function TaskSettings() {
       <DropdownMenuContent className="w-44 bg-board-background">
         <DropdownMenuLabel>Actions</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => onOpen("editTask")}>
+        <DropdownMenuItem onClick={() => setOpenEditModal(true)}>
           Edit Task
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => onOpen("deleteTask")}
+          onClick={() => setOpenDeleteModal(true)}
           className="text-red-500 focus:text-red-500"
         >
           Delete Task
