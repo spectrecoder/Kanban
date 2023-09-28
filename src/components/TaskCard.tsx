@@ -294,6 +294,7 @@ export default function TaskCard({ open, setOpen, taskId, taskTitle }: Props) {
         open={openEditModal}
         setOpen={setOpenEditModal}
         taskDetail={data?.taskDetail}
+        boardColumns={data?.boardColumns}
       />
     </>
   );

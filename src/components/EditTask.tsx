@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { X } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import { Button } from "src/components/ui/button";
 import {
   Dialog,
@@ -31,13 +31,17 @@ import {
 import * as z from "zod";
 import { useModal } from "~/lib/hooks/useModal";
 import { Textarea } from "./ui/textarea";
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useEffect } from "react";
 import { RouterOutputs } from "~/lib/api";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 
 interface Props {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
   taskDetail: RouterOutputs["task"]["getTaskDetail"]["taskDetail"] | undefined;
+  boardColumns:
+    | RouterOutputs["task"]["getTaskDetail"]["boardColumns"]
+    | undefined;
 }
 
 const formSchema = z.object({
@@ -50,20 +54,75 @@ const formSchema = z.object({
     .max(150, { message: "Must be 150 or fewer characters long" })
     .optional(),
   status: z.string(),
+  subtasks: z.object({ title: z.string(), id: z.string().optional() }).array(),
 });
 
-export default function EditTask({ open, setOpen, taskDetail }: Props) {
+export default function EditTask({
+  open,
+  setOpen,
+  taskDetail,
+  boardColumns,
+}: Props) {
+  const [subtasksParent] = useAutoAnimate();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      taskName: "",
-      description: "",
-      status: "todo",
+      taskName: taskDetail?.title ?? "",
+      description: taskDetail?.description ?? "",
+      status: taskDetail?.boardColumn.id ?? "",
     },
   });
 
+  const { fields, append, remove } = useFieldArray({
+    control: form.control, // control props comes from useForm (optional: if you are using FormContext)
+    name: "subtasks", // unique name for Field Array
+  });
+
+  useEffect(() => {
+    if (!taskDetail || !open) return;
+    form.setValue(
+      "subtasks",
+      taskDetail.subTasks.map((st) => ({
+        title: st.title,
+        id: st.id,
+      }))
+    );
+  }, [taskDetail, open]);
+
+  useEffect(() => {
+    if (!taskDetail) return;
+
+    form.setValue("taskName", taskDetail.title);
+    form.setValue("description", taskDetail.description ?? "");
+    form.setValue("status", taskDetail.boardColumn.id);
+  }, [taskDetail?.title, taskDetail?.description, taskDetail?.boardColumn.id]);
+
   function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!taskDetail) return;
+
     console.log(values);
+
+    const filterOutEmptyInputs = values.subtasks.filter((st) => !!st.title);
+
+    const subtasksWithId = values.subtasks.filter((st) => !!st.id);
+
+    const formattedSubtasks: Record<string, string> = {};
+    taskDetail.subTasks.forEach((st) => (formattedSubtasks[st.id] = st.title));
+
+    //? create
+    const createSubtasks = filterOutEmptyInputs.filter((st) => !st.id);
+
+    //* update
+    const updateSubtasks = subtasksWithId.filter(
+      (st) => st.title && st.title !== formattedSubtasks[st.id as string]
+    ) as { title: string; id: string }[];
+
+    //! delete
+    const subtasksArrayWithOnlyId = subtasksWithId.map((st) => st.id as string);
+    const deleteSubtasks = Object.entries(formattedSubtasks)
+      .filter((st) => !subtasksArrayWithOnlyId.includes(st[0]))
+      .map((st) => st[0]);
   }
 
   return (
@@ -83,9 +142,8 @@ export default function EditTask({ open, setOpen, taskDetail }: Props) {
                   <FormLabel>Task Name</FormLabel>
                   <FormControl>
                     <Input
-                      defaultValue="Build UI for onboarding flow"
                       placeholder="e.g. Take coffee break"
-                      {...{ ...field, value: undefined }}
+                      {...field}
                       className="cursor-pointer outline-0 ring-offset-0 focus-visible:border-main-color focus-visible:outline-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                     />
                   </FormControl>
@@ -102,10 +160,9 @@ export default function EditTask({ open, setOpen, taskDetail }: Props) {
                   <FormLabel>Description</FormLabel>
                   <FormControl>
                     <Textarea
-                      defaultValue="It's always good to take a break. This  15 minute break will  recharge the batteries  a little."
                       placeholder="e.g. It's always good to take a break. This  15 minute break will  recharge the batteries  a little."
+                      {...field}
                       className="h-28 cursor-pointer resize-none outline-0 ring-offset-0 focus-visible:border-main-color focus-visible:outline-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                      {...{ ...field, value: undefined }}
                     />
                   </FormControl>
                   <FormMessage />
@@ -115,30 +172,36 @@ export default function EditTask({ open, setOpen, taskDetail }: Props) {
 
             <fieldset className="grid w-full gap-2.5">
               <Label>Subtasks</Label>
-              <div className="flex items-center gap-x-2">
-                <Input
-                  defaultValue="Sign up page"
-                  className="cursor-pointer outline-0 ring-offset-0 focus-visible:border-main-color focus-visible:outline-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                />
-                <X className="h-7 w-7 cursor-pointer text-gray-400" />
-              </div>
-              <div className="flex items-center gap-x-2">
-                <Input
-                  defaultValue="Sign in page"
-                  className="cursor-pointer outline-0 ring-offset-0 focus-visible:border-main-color focus-visible:outline-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                />
-                <X className="h-7 w-7 cursor-pointer text-gray-400" />
-              </div>
-              <div className="flex items-center gap-x-2">
-                <Input
-                  defaultValue="Welcome page"
-                  className="cursor-pointer outline-0 ring-offset-0 focus-visible:border-main-color focus-visible:outline-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                />
-                <X className="h-7 w-7 cursor-pointer text-gray-400" />
+              <div ref={subtasksParent} className="space-y-2.5">
+                {fields.map((st, idx) => (
+                  <FormField
+                    key={st.id}
+                    control={form.control}
+                    name={`subtasks.${idx}.title`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <div className="flex items-center gap-x-2">
+                            <Input
+                              {...field}
+                              className="cursor-pointer outline-0 ring-offset-0 focus-visible:border-main-color focus-visible:outline-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                            />
+                            <X
+                              onClick={() => remove(idx)}
+                              className="h-7 w-7 cursor-pointer text-gray-400"
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                ))}
               </div>
             </fieldset>
 
             <Button
+              onClick={() => append({ title: "" })}
               type="button"
               size="full"
               className="w-full font-bold capitalize text-white dark:text-main-color"
@@ -152,7 +215,10 @@ export default function EditTask({ open, setOpen, taskDetail }: Props) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Current Status</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue="todo">
+                  <Select
+                    defaultValue={taskDetail?.boardColumn.id}
+                    onValueChange={field.onChange}
+                  >
                     <FormControl>
                       <SelectTrigger className="w-full outline-0 ring-offset-0 focus:border-main-color focus:outline-0 focus:ring-0 focus:ring-offset-0">
                         <SelectValue placeholder="Select a status" />
@@ -161,9 +227,11 @@ export default function EditTask({ open, setOpen, taskDetail }: Props) {
                     <SelectContent>
                       <SelectGroup>
                         <SelectLabel>Status</SelectLabel>
-                        <SelectItem value="todo">Todo</SelectItem>
-                        <SelectItem value="doing">Doing</SelectItem>
-                        <SelectItem value="done">Done</SelectItem>
+                        {boardColumns?.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.title}
+                          </SelectItem>
+                        ))}
                       </SelectGroup>
                     </SelectContent>
                   </Select>

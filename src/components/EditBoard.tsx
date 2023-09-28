@@ -1,7 +1,8 @@
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, X } from "lucide-react";
-import { useRouter } from "next/router";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useEffect } from "react";
+import { useFieldArray, useForm } from "react-hook-form";
 import { Button } from "src/components/ui/button";
 import {
   Dialog,
@@ -22,13 +23,8 @@ import { Input } from "src/components/ui/input";
 import { Label } from "src/components/ui/label";
 import * as z from "zod";
 import { RouterOutputs, api } from "~/lib/api";
-import { useEditBoard } from "~/lib/hooks/use-edit-board";
-import { AlertCircle } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
-import { useEffect, useState } from "react";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useToast } from "./ui/use-toast";
 import { useModal } from "~/lib/hooks/useModal";
+import { useToast } from "./ui/use-toast";
 
 const formSchema = z.object({
   boardName: z
