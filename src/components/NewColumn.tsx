@@ -21,15 +21,26 @@ import {
 import { Input } from "src/components/ui/input";
 import { Label } from "src/components/ui/label";
 import * as z from "zod";
+import { api } from "~/lib/api";
+import { useToast } from "./ui/use-toast";
+import { useRouter } from "next/router";
+import { Loader2 } from "lucide-react";
+import { useModal } from "~/lib/hooks/useModal";
 
 const formSchema = z.object({
   columnName: z
     .string()
     .min(2, { message: "Must be 2 or more characters long" })
-    .max(50, { message: "Must be 50 or fewer characters long" }),
+    .max(50, { message: "Must be 50 or fewer characters long" })
+    .trim(),
 });
 
 export default function NewColumn() {
+  const { toast } = useToast();
+  const utils = api.useContext();
+  const router = useRouter();
+  const [type, onClose] = useModal((state) => [state.type, state.onClose]);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -37,17 +48,49 @@ export default function NewColumn() {
     },
   });
 
+  const { mutate: createColumn, isLoading: creatingColumn } =
+    api.board.createColumn.useMutation({
+      onSuccess: (data) => {
+        utils.board.getSingleBoard.setData(
+          { boardID: router.query.id as string },
+          (old) => {
+            if (!old) return old;
+            return {
+              ...old,
+              boardColumns: [...old.boardColumns, { ...data, tasks: [] }],
+            };
+          }
+        );
+
+        utils.task.getTaskDetail.invalidate({
+          boardId: router.query.id as string,
+        });
+
+        toast({
+          description: "Successfully created new column",
+        });
+
+        onClose();
+      },
+      onError: (err) => {
+        console.log(err);
+        toast({
+          variant: "destructive",
+          description: "Server error. Please try again later",
+        });
+      },
+    });
+
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
+    createColumn({
+      columnName: values.columnName,
+      boardId: router.query.id as string,
+    });
   }
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <aside className="mt-9 flex max-h-[813px] min-h-[572.2px] w-[17.5rem] shrink-0 cursor-pointer items-center justify-center rounded-md bg-sky-100/60 text-[1.65rem] font-semibold capitalize text-gray-600 hover:text-main-color dark:bg-main-background/40 dark:text-gray-500 dark:hover:text-main-color">
-          + new column
-        </aside>
-      </DialogTrigger>
+    <Dialog open={type === "createColumn"} onOpenChange={onClose}>
       <DialogContent className="max-h-[90%] overflow-y-auto bg-main-background scrollbar-none sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>New Column</DialogTitle>
@@ -77,12 +120,20 @@ export default function NewColumn() {
 
             <DialogFooter>
               <Button
+                disabled={creatingColumn}
                 type="submit"
                 size="full"
                 variant="purple"
                 className="w-full font-bold capitalize"
               >
-                create new column
+                {creatingColumn ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    creating
+                  </>
+                ) : (
+                  "create new column"
+                )}
               </Button>
             </DialogFooter>
           </form>

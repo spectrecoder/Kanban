@@ -11,8 +11,8 @@ export const taskRouter = createTRPCRouter({
   create: protectedProcedure
     .input(
       z.object({
-        title: z.string().min(1),
-        description: z.string().optional(),
+        title: z.string().min(2).max(50),
+        description: z.string().max(150).optional(),
         columnId: z.string().min(6),
         subtasks: z.object({ title: z.string() }).array(),
       })
@@ -39,11 +39,13 @@ export const taskRouter = createTRPCRouter({
                 id: input.columnId,
               },
             },
-            subTasks: {
-              createMany: {
-                data: input.subtasks,
-              },
-            },
+            subTasks: input.subtasks.length
+              ? {
+                  createMany: {
+                    data: input.subtasks,
+                  },
+                }
+              : undefined,
           },
           select: {
             id: true,
@@ -202,8 +204,8 @@ export const taskRouter = createTRPCRouter({
       z.object({
         taskId: z.string(),
         columnId: z.string().optional(),
-        taskTitle: z.string().min(2).max(50),
-        taskDescription: z.string().max(150),
+        taskTitle: z.string().min(2).max(50).optional(),
+        taskDescription: z.string().max(150).optional(),
         deleteSubtasks: z.string().min(1).array(),
         updateSubtasks: z
           .object({ title: z.string().min(1), id: z.string() })
@@ -232,7 +234,7 @@ export const taskRouter = createTRPCRouter({
             );
           }
 
-          const editBoard = await tx.task.update({
+          return await tx.task.update({
             where: {
               id: input.taskId,
               boardColumn: {
@@ -245,6 +247,14 @@ export const taskRouter = createTRPCRouter({
             },
             data: {
               title: input.taskTitle,
+              description: input.taskDescription,
+              boardColumn: input.columnId
+                ? {
+                    connect: {
+                      id: input.columnId,
+                    },
+                  }
+                : undefined,
               subTasks: {
                 createMany: input.createSubtasks.length
                   ? {

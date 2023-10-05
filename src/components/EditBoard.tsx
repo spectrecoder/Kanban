@@ -75,6 +75,11 @@ export default function EditBoard({ boardDetails }: Props) {
             };
           }
         );
+
+        utils.task.getTaskDetail.invalidate({
+          boardId: data.id,
+        });
+
         if (variables.title) {
           utils.board.getBoards.setData(undefined, (old) => {
             if (!old) return old;
@@ -215,7 +220,7 @@ export default function EditBoard({ boardDetails }: Props) {
                             />
                             <X
                               onClick={() => remove(idx)}
-                              className="h-7 w-7 cursor-pointer text-gray-400"
+                              className="text-gray-400 cursor-pointer h-7 w-7"
                             />
                           </div>
                         </FormControl>
@@ -231,7 +236,7 @@ export default function EditBoard({ boardDetails }: Props) {
               onClick={() => append({ name: "" })}
               type="button"
               size="full"
-              className="w-full font-bold capitalize text-white dark:text-main-color"
+              className="w-full font-bold text-white capitalize dark:text-main-color"
             >
               + add new column
             </Button>
@@ -246,7 +251,7 @@ export default function EditBoard({ boardDetails }: Props) {
               >
                 {editingBoard ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     saving
                   </>
                 ) : (

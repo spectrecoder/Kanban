@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { Button } from "src/components/ui/button";
 import {
@@ -32,8 +32,10 @@ import * as z from "zod";
 import { useModal } from "~/lib/hooks/useModal";
 import { Textarea } from "./ui/textarea";
 import { Dispatch, SetStateAction, useEffect } from "react";
-import { RouterOutputs } from "~/lib/api";
+import { RouterOutputs, api } from "~/lib/api";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { useToast } from "./ui/use-toast";
+import { useRouter } from "next/router";
 
 interface Props {
   open: boolean;
@@ -51,8 +53,7 @@ const formSchema = z.object({
     .max(50, { message: "Must be 50 or fewer characters long" }),
   description: z
     .string()
-    .max(150, { message: "Must be 150 or fewer characters long" })
-    .optional(),
+    .max(150, { message: "Must be 150 or fewer characters long" }),
   status: z.string(),
   subtasks: z.object({ title: z.string(), id: z.string().optional() }).array(),
 });
@@ -64,6 +65,9 @@ export default function EditTask({
   boardColumns,
 }: Props) {
   const [subtasksParent] = useAutoAnimate();
+  const { toast } = useToast();
+  const utils = api.useContext();
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -79,6 +83,36 @@ export default function EditTask({
     name: "subtasks", // unique name for Field Array
   });
 
+  const { mutate: editTask, isLoading: editingTask } =
+    api.task.editTask.useMutation({
+      onSuccess: (data) => {
+        toast({
+          description: "Updated task",
+        });
+        setOpen(false);
+        utils.task.getTaskDetail.setData(
+          {
+            taskId: data.id,
+            boardId: router.query.id as string,
+          },
+          (old) => {
+            if (!old) return old;
+            return { ...old, taskDetail: data };
+          }
+        );
+        utils.board.getSingleBoard.invalidate({
+          boardID: router.query.id as string,
+        });
+      },
+      onError: (err) => {
+        console.log(err);
+        toast({
+          variant: "destructive",
+          description: "Server error. Please try again later",
+        });
+      },
+    });
+
   useEffect(() => {
     if (!taskDetail || !open) return;
     form.setValue(
@@ -91,12 +125,17 @@ export default function EditTask({
   }, [taskDetail, open]);
 
   useEffect(() => {
-    if (!taskDetail) return;
+    if (!taskDetail || !open) return;
 
     form.setValue("taskName", taskDetail.title);
     form.setValue("description", taskDetail.description ?? "");
     form.setValue("status", taskDetail.boardColumn.id);
-  }, [taskDetail?.title, taskDetail?.description, taskDetail?.boardColumn.id]);
+  }, [
+    taskDetail?.title,
+    taskDetail?.description,
+    taskDetail?.boardColumn.id,
+    open,
+  ]);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     if (!taskDetail) return;
@@ -123,6 +162,31 @@ export default function EditTask({
     const deleteSubtasks = Object.entries(formattedSubtasks)
       .filter((st) => !subtasksArrayWithOnlyId.includes(st[0]))
       .map((st) => st[0]);
+
+    if (
+      values.taskName === taskDetail.title &&
+      createSubtasks.length === 0 &&
+      updateSubtasks.length === 0 &&
+      deleteSubtasks.length === 0 &&
+      values.status === taskDetail.boardColumn.id &&
+      values.description === taskDetail.description
+    )
+      return setOpen(false);
+
+    editTask({
+      taskId: taskDetail.id,
+      columnId:
+        values.status === taskDetail.boardColumn.id ? undefined : values.status,
+      taskTitle:
+        values.taskName === taskDetail.title ? undefined : values.taskName,
+      taskDescription:
+        values.description === taskDetail.description
+          ? undefined
+          : values.description,
+      deleteSubtasks,
+      updateSubtasks,
+      createSubtasks,
+    });
   }
 
   return (
@@ -245,9 +309,17 @@ export default function EditTask({
                 type="submit"
                 size="full"
                 variant="purple"
+                disabled={editingTask}
                 className="w-full font-bold capitalize"
               >
-                edit task
+                {editingTask ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    editing
+                  </>
+                ) : (
+                  "edit task"
+                )}
               </Button>
             </DialogFooter>
           </form>

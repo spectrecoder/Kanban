@@ -17,12 +17,14 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import CreateTask from "~/components/CreateTask";
 import EditBoard from "~/components/EditBoard";
 import DeleteBoard from "~/components/DeleteBoard";
+import { useModal } from "~/lib/hooks/useModal";
 
 export default function Board({
   userSession,
   boardID,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const isSidebarOpen = useSidebar((state) => state.isOpen);
+  const onOpen = useModal((state) => state.onOpen);
 
   const { data: currentBoard } = api.board.getSingleBoard.useQuery(
     { boardID },
@@ -36,7 +38,7 @@ export default function Board({
   if (!currentBoard) {
     return (
       <Alert variant="destructive" className="m-4 h-fit bg-board-background">
-        <AlertCircle className="h-4 w-4" />
+        <AlertCircle className="w-4 h-4" />
         <AlertTitle>Error</AlertTitle>
         <AlertDescription>
           Board not found. Please enter a valid board id.
@@ -69,7 +71,12 @@ export default function Board({
                 ))}
               </div>
 
-              <NewColumn />
+              <aside
+                onClick={() => onOpen("createColumn")}
+                className="mt-9 flex max-h-[813px] min-h-[572.2px] w-[17.5rem] shrink-0 cursor-pointer items-center justify-center rounded-md bg-sky-100/60 text-[1.65rem] font-semibold capitalize text-gray-600 hover:text-main-color dark:bg-main-background/40 dark:text-gray-500 dark:hover:text-main-color"
+              >
+                + new column
+              </aside>
             </main>
           </div>
         </ScrollArea>
@@ -95,6 +102,8 @@ export default function Board({
       />
 
       <DeleteBoard boardTitle={currentBoard.title} />
+
+      <NewColumn />
     </>
   );
 }

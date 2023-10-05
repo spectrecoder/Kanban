@@ -7,10 +7,8 @@ interface useModalStore {
     | "deleteBoard"
     | "editBoard"
     | "createTask"
-    | "editTask"
-    | "deleteTask"
-    | "taskDetails"
     | "sidebar"
+    | "createColumn"
     | "";
   //   isOpen: boolean;
   onOpen: (type: useModalStore["type"]) => void;
@@ -20,7 +18,6 @@ interface useModalStore {
 export const useModal = createWithEqualityFn<useModalStore>(
   (set) => ({
     type: "",
-    // isOpen: true,
     onOpen: (type: useModalStore["type"]) => set({ type }),
     onClose: () => set({ type: "" }),
   }),

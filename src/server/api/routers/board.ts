@@ -62,7 +62,12 @@ async function getBoardDetails({
 
 export const boardRouter = createTRPCRouter({
   create: protectedProcedure
-    .input(z.object({ title: z.string(), columns: z.string().array() }))
+    .input(
+      z.object({
+        title: z.string().min(2).max(50),
+        columns: z.string().array(),
+      })
+    )
     .mutation(
       async ({ ctx: { prisma, session }, input: { title, columns } }) => {
         try {
@@ -154,7 +159,7 @@ export const boardRouter = createTRPCRouter({
     .input(
       z.object({
         boardID: z.string(),
-        title: z.string().optional(),
+        title: z.string().min(2).max(50).optional(),
         deleteColumns: z.string().min(1).array(),
         updateColumns: z
           .object({ name: z.string().min(1), columnID: z.string() })
@@ -245,4 +250,35 @@ export const boardRouter = createTRPCRouter({
         throw new TRPCError(formatError(err));
       }
     }),
+    createColumn: protectedProcedure.input(z.object({columnName: z.string().min(2).max(50), boardId: z.string()})).mutation(async ({ctx: {prisma, session}, input}) => {
+      try{
+        await prisma.board.findUniqueOrThrow({
+          where: {
+            id: input.boardId,
+            user: {
+              id: session.user.id
+            }
+          },
+        })
+        return await prisma.boardColumn.create({
+          data: {
+            title: input.columnName,
+            columnColor: pickColumnColor(),
+            board: {
+              connect: {
+                id: input.boardId
+              }
+            }
+          },
+          select: {
+            id: true,
+            title: true,
+            columnColor: true
+          }
+        })
+      }catch(err){
+        console.log(err);
+        throw new TRPCError(formatError(err));
+      }
+    })
 });

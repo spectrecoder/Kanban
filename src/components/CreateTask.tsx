@@ -34,6 +34,7 @@ import { RouterOutputs, api } from "~/lib/api";
 import { useModal } from "~/lib/hooks/useModal";
 import { Textarea } from "./ui/textarea";
 import { useToast } from "./ui/use-toast";
+import { useEffect } from "react";
 
 interface Props {
   columns: Pick<
@@ -118,6 +119,11 @@ export default function CreateTask({ columns, boardId }: Props) {
     name: "subtasks", // unique name for Field Array
   });
 
+  useEffect(() => {
+    if (columns[0] === undefined) return;
+    form.setValue("status", columns[0].id);
+  }, []);
+
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
     createTask({
@@ -164,7 +170,7 @@ export default function CreateTask({ columns, boardId }: Props) {
                   <FormControl>
                     <Textarea
                       placeholder="e.g. It's always good to take a break. This  15 minute break will  recharge the batteries  a little."
-                      className="h-28 cursor-pointer resize-none outline-0 ring-offset-0 focus-visible:border-main-color focus-visible:outline-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                      className="cursor-pointer resize-none h-28 outline-0 ring-offset-0 focus-visible:border-main-color focus-visible:outline-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                       {...field}
                     />
                   </FormControl>
@@ -191,7 +197,7 @@ export default function CreateTask({ columns, boardId }: Props) {
                             />
                             <X
                               onClick={() => remove(idx)}
-                              className="h-7 w-7 cursor-pointer text-gray-400"
+                              className="text-gray-400 cursor-pointer h-7 w-7"
                             />
                           </div>
                         </FormControl>
@@ -207,7 +213,7 @@ export default function CreateTask({ columns, boardId }: Props) {
               onClick={() => append({ title: "" })}
               type="button"
               size="full"
-              className="w-full font-bold capitalize text-white dark:text-main-color"
+              className="w-full font-bold text-white capitalize dark:text-main-color"
             >
               + add new subtask
             </Button>
@@ -253,7 +259,7 @@ export default function CreateTask({ columns, boardId }: Props) {
               >
                 {creatingTask ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     creating
                   </>
                 ) : (
