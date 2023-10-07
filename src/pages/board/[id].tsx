@@ -1,23 +1,31 @@
-import { cn } from "~/lib/utils";
-import BoardHeader from "~/components/BoardHeader";
-import TasksGroup from "~/components/TasksGroup";
-import { ScrollArea } from "~/components/ui/scroll-area";
-import { useSidebar } from "~/lib/hooks/use-sidebar";
-import NewColumn from "~/components/NewColumn";
-import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
-import { getServerAuthSession } from "~/server/auth";
+import { DndContext, DragEndEvent, DragStartEvent } from "@dnd-kit/core";
+import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
+import {
+  SortableContext,
+  arrayMove,
+  horizontalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createServerSideHelpers } from "@trpc/react-query/server";
+import { AlertCircle } from "lucide-react";
+import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
+import { useMemo, useState } from "react";
+import superjson from "superjson";
+import BoardHeader from "~/components/BoardHeader";
+import CreateTask from "~/components/CreateTask";
+import DeleteBoard from "~/components/DeleteBoard";
+import EditBoard from "~/components/EditBoard";
+import NewColumn from "~/components/NewColumn";
+import TasksGroup from "~/components/TasksGroup";
+import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
+import { ScrollArea } from "~/components/ui/scroll-area";
+import { RouterOutputs, api } from "~/lib/api";
+import { useSidebar } from "~/lib/hooks/use-sidebar";
+import { useModal } from "~/lib/hooks/useModal";
+import { cn } from "~/lib/utils";
 import { appRouter } from "~/server/api/root";
 import { createInnerTRPCContext } from "~/server/api/trpc";
-import superjson from "superjson";
-import { api } from "~/lib/api";
-import { AlertCircle } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import CreateTask from "~/components/CreateTask";
-import EditBoard from "~/components/EditBoard";
-import DeleteBoard from "~/components/DeleteBoard";
-import { useModal } from "~/lib/hooks/useModal";
+import { getServerAuthSession } from "~/server/auth";
 
 export default function Board({
   userSession,
@@ -25,6 +33,10 @@ export default function Board({
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const isSidebarOpen = useSidebar((state) => state.isOpen);
   const onOpen = useModal((state) => state.onOpen);
+  const [activeColumn, setActiveColumn] = useState<
+    RouterOutputs["board"]["getSingleBoard"]["boardColumns"][number] | null
+  >(null);
+  const utils = api.useContext();
 
   const { data: currentBoard } = api.board.getSingleBoard.useQuery(
     { boardID },
@@ -35,16 +47,58 @@ export default function Board({
 
   const [boardColumnsParent] = useAutoAnimate();
 
+  const columnsID = useMemo(() => {
+    if (!currentBoard) return [];
+    return currentBoard.boardColumns.map((bc) => bc.id);
+  }, [currentBoard]);
+
   if (!currentBoard) {
     return (
       <Alert variant="destructive" className="m-4 h-fit bg-board-background">
-        <AlertCircle className="w-4 h-4" />
+        <AlertCircle className="h-4 w-4" />
         <AlertTitle>Error</AlertTitle>
         <AlertDescription>
           Board not found. Please enter a valid board id.
         </AlertDescription>
       </Alert>
     );
+  }
+
+  function handleDragStart(event: DragStartEvent) {
+    // console.log(event.active.id);
+    if (event.active.data.current?.type === "Column") {
+      setActiveColumn(event.active.data.current.column);
+      return;
+    }
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over) return;
+
+    const activeColumnId = active.id;
+    const overColumnId = over.id;
+
+    if (activeColumnId === overColumnId) return;
+
+    utils.board.getSingleBoard.setData({ boardID }, (old) => {
+      if (!old) return old;
+      const activeColumnIndex = old.boardColumns.findIndex(
+        (col) => col.id === activeColumnId
+      );
+      const overColumnIndex = old.boardColumns.findIndex(
+        (col) => col.id === overColumnId
+      );
+
+      return {
+        ...old,
+        boardColumns: arrayMove(
+          old.boardColumns,
+          activeColumnIndex,
+          overColumnIndex
+        ),
+      };
+    });
   }
 
   return (
@@ -65,18 +119,40 @@ export default function Board({
         >
           <div className="flex h-[calc(100vh-76.8px)] gap-x-6 overflow-y-auto p-5 scrollbar-none">
             <main className="flex h-fit gap-x-6">
-              <div className="flex h-full gap-x-6" ref={boardColumnsParent}>
-                {currentBoard.boardColumns.map((bc) => (
-                  <TasksGroup key={bc.id} boardColumn={bc} />
-                ))}
-              </div>
-
-              <aside
-                onClick={() => onOpen("createColumn")}
-                className="mt-9 flex max-h-[813px] min-h-[572.2px] w-[17.5rem] shrink-0 cursor-pointer items-center justify-center rounded-md bg-sky-100/60 text-[1.65rem] font-semibold capitalize text-gray-600 hover:text-main-color dark:bg-main-background/40 dark:text-gray-500 dark:hover:text-main-color"
+              <DndContext
+                id="columnsContext"
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                modifiers={[restrictToHorizontalAxis]}
               >
-                + new column
-              </aside>
+                <div className="flex h-full gap-x-6" ref={boardColumnsParent}>
+                  <SortableContext
+                    items={columnsID}
+                    strategy={horizontalListSortingStrategy}
+                  >
+                    {currentBoard.boardColumns.map((bc) => (
+                      <TasksGroup key={bc.id} boardColumn={bc} />
+                    ))}
+                  </SortableContext>
+                </div>
+
+                <aside
+                  onClick={() => onOpen("createColumn")}
+                  className="mt-9 flex max-h-[813px] min-h-[572.2px] w-[17.5rem] shrink-0 cursor-pointer items-center justify-center rounded-md bg-sky-100/60 text-[1.65rem] font-semibold capitalize text-gray-600 hover:text-main-color dark:bg-main-background/40 dark:text-gray-500 dark:hover:text-main-color"
+                >
+                  + new column
+                </aside>
+
+                {/* {typeof window !== "undefined" &&
+                  createPortal(
+                    <DragOverlay>
+                      {activeColumn ? (
+                        <TasksGroup boardColumn={activeColumn} />
+                      ) : null}
+                    </DragOverlay>,
+                    document.body
+                  )} */}
+              </DndContext>
             </main>
           </div>
         </ScrollArea>

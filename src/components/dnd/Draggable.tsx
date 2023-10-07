@@ -6,9 +6,10 @@ interface Props {
 }
 
 export default function Draggable(props: Props) {
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({
-    id: props.dragId,
-  });
+  const { attributes, listeners, setNodeRef, transform, isDragging } =
+    useDraggable({
+      id: props.dragId,
+    });
   const style = transform
     ? {
         transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,

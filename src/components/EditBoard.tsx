@@ -76,6 +76,7 @@ export default function EditBoard({ boardDetails }: Props) {
           }
         );
 
+        //TODO: SetData
         utils.task.getTaskDetail.invalidate({
           boardId: data.id,
         });
