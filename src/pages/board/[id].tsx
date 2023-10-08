@@ -1,4 +1,13 @@
-import { DndContext, DragEndEvent, DragStartEvent } from "@dnd-kit/core";
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverEvent,
+  DragOverlay,
+  DragStartEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
 import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
 import {
   SortableContext,
@@ -10,12 +19,14 @@ import { createServerSideHelpers } from "@trpc/react-query/server";
 import { AlertCircle } from "lucide-react";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import superjson from "superjson";
 import BoardHeader from "~/components/BoardHeader";
 import CreateTask from "~/components/CreateTask";
 import DeleteBoard from "~/components/DeleteBoard";
 import EditBoard from "~/components/EditBoard";
 import NewColumn from "~/components/NewColumn";
+import Task from "~/components/Task";
 import TasksGroup from "~/components/TasksGroup";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { ScrollArea } from "~/components/ui/scroll-area";
@@ -36,6 +47,10 @@ export default function Board({
   const [activeColumn, setActiveColumn] = useState<
     RouterOutputs["board"]["getSingleBoard"]["boardColumns"][number] | null
   >(null);
+  const [activeTask, setActiveTask] = useState<{
+    task: RouterOutputs["board"]["getSingleBoard"]["boardColumns"][number]["tasks"][number];
+    columnId: string;
+  } | null>(null);
   const utils = api.useContext();
 
   const { data: currentBoard } = api.board.getSingleBoard.useQuery(
@@ -45,12 +60,20 @@ export default function Board({
     }
   );
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 1,
+      },
+    })
+  );
+
   const [boardColumnsParent] = useAutoAnimate();
 
-  const columnsID = useMemo(() => {
-    if (!currentBoard) return [];
-    return currentBoard.boardColumns.map((bc) => bc.id);
-  }, [currentBoard]);
+  const columnsID = useMemo(
+    () => currentBoard?.boardColumns.map((bc) => bc.id) || [],
+    [currentBoard]
+  );
 
   if (!currentBoard) {
     return (
@@ -65,21 +88,30 @@ export default function Board({
   }
 
   function handleDragStart(event: DragStartEvent) {
-    // console.log(event.active.id);
     if (event.active.data.current?.type === "Column") {
-      setActiveColumn(event.active.data.current.column);
-      return;
+      return setActiveColumn(event.active.data.current.column);
+    }
+
+    if (event.active.data.current?.type === "Task") {
+      return setActiveTask({
+        task: event.active.data.current.task,
+        columnId: event.active.data.current.columnId,
+      });
     }
   }
 
   function handleDragEnd(event: DragEndEvent) {
+    setActiveColumn(null);
+    setActiveTask(null);
+
     const { active, over } = event;
     if (!over) return;
 
     const activeColumnId = active.id;
     const overColumnId = over.id;
 
-    if (activeColumnId === overColumnId) return;
+    if (activeColumnId === overColumnId) return; //?
+    console.log("after");
 
     utils.board.getSingleBoard.setData({ boardID }, (old) => {
       if (!old) return old;
@@ -99,6 +131,102 @@ export default function Board({
         ),
       };
     });
+  }
+
+  function handleDragOver(event: DragOverEvent) {
+    const { active, over } = event;
+    if (!over) return;
+
+    const activeId = active.id;
+    const overId = over.id;
+
+    if (activeId === overId) return;
+
+    const isActiveATask = active.data.current?.type === "Task";
+    const isOverATask = over.data.current?.type === "Task";
+
+    if (!isActiveATask) return;
+
+    if (isActiveATask && isOverATask) {
+      const activeTaskColumnId = active.data.current?.columnId;
+      const overTaskColumnId = over.data.current?.columnId;
+
+      utils.board.getSingleBoard.setData({ boardID }, (old) => {
+        if (!old) return old;
+
+        let currentColumn;
+
+        if (activeTaskColumnId === overTaskColumnId) {
+          currentColumn = old.boardColumns.find(
+            (b) => b.id === activeTaskColumnId
+          );
+        } else {
+          currentColumn = old.boardColumns.find(
+            (b) => b.id === overTaskColumnId
+          );
+        }
+
+        if (!currentColumn) return old;
+
+        if (activeTaskColumnId === overTaskColumnId) {
+          const overTaskIndex = currentColumn.tasks.findIndex(
+            (t) => t.id === overId
+          );
+          const activeTaskIndex = currentColumn.tasks.findIndex(
+            (t) => t.id === activeId
+          );
+          return {
+            ...old,
+            boardColumns: [
+              ...old.boardColumns.map((b) =>
+                b.id === activeTaskColumnId
+                  ? {
+                      ...b,
+                      tasks: arrayMove(b.tasks, activeTaskIndex, overTaskIndex),
+                    }
+                  : b
+              ),
+            ],
+          };
+        } else {
+          const activeColumn = old.boardColumns.find(
+            (b) => b.id === activeTaskColumnId
+          );
+          const overColumn = old.boardColumns.find(
+            (b) => b.id === overTaskColumnId
+          );
+
+          if (!activeColumn || !overColumn) return old;
+
+          const activeTask = active.data.current?.task;
+
+          const activeColumnTasks = activeColumn.tasks.filter(
+            (t) => t.id !== activeId
+          );
+          let overColumnTasks = [activeTask, ...overColumn.tasks];
+          const overTaskIndex = overColumnTasks.findIndex(
+            (t) => t.id === overId
+          );
+          overColumnTasks = arrayMove(overColumnTasks, 0, overTaskIndex - 1); //?
+
+          return {
+            ...old,
+            boardColumns: [
+              ...old.boardColumns.map((b) =>
+                b.id === activeTaskColumnId
+                  ? {
+                      ...b,
+                      tasks: activeColumnTasks,
+                    }
+                  : b.id === overTaskColumnId
+                  ? { ...b, tasks: overColumnTasks }
+                  : b
+              ),
+            ],
+          };
+        }
+      });
+    }
   }
 
   return (
@@ -121,9 +249,10 @@ export default function Board({
             <main className="flex h-fit gap-x-6">
               <DndContext
                 id="columnsContext"
+                sensors={sensors}
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
-                modifiers={[restrictToHorizontalAxis]}
+                onDragOver={handleDragOver}
               >
                 <div className="flex h-full gap-x-6" ref={boardColumnsParent}>
                   <SortableContext
@@ -143,15 +272,17 @@ export default function Board({
                   + new column
                 </aside>
 
-                {/* {typeof window !== "undefined" &&
+                {typeof window !== "undefined" &&
                   createPortal(
                     <DragOverlay>
                       {activeColumn ? (
                         <TasksGroup boardColumn={activeColumn} />
                       ) : null}
+
+                      {activeTask ? <Task {...activeTask} /> : null}
                     </DragOverlay>,
                     document.body
-                  )} */}
+                  )}
               </DndContext>
             </main>
           </div>

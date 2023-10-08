@@ -55,6 +55,25 @@ export default function NewColumn() {
           { boardID: router.query.id as string },
           (old) => {
             if (!old) return old;
+
+            const allTasks = old.boardColumns.flatMap((b) => b.tasks);
+
+            allTasks.map((t) =>
+              utils.task.getTaskDetail.setData(
+                { boardId: router.query.id as string, taskId: t.id },
+                (old) => {
+                  if (!old) return old;
+                  return {
+                    ...old,
+                    boardColumns: [
+                      ...old.boardColumns,
+                      { id: data.id, title: data.title },
+                    ],
+                  };
+                }
+              )
+            );
+
             return {
               ...old,
               boardColumns: [...old.boardColumns, { ...data, tasks: [] }],
@@ -62,9 +81,9 @@ export default function NewColumn() {
           }
         );
 
-        utils.task.getTaskDetail.invalidate({
-          boardId: router.query.id as string,
-        });
+        // utils.task.getTaskDetail.invalidate({
+        //   boardId: router.query.id as string,
+        // });
 
         toast({
           description: "Successfully created new column",
@@ -128,7 +147,7 @@ export default function NewColumn() {
               >
                 {creatingColumn ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     creating
                   </>
                 ) : (

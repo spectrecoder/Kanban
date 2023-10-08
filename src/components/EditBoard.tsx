@@ -76,10 +76,25 @@ export default function EditBoard({ boardDetails }: Props) {
           }
         );
 
-        //TODO: SetData
-        utils.task.getTaskDetail.invalidate({
-          boardId: data.id,
-        });
+        const allTasks = data.boardColumns.flatMap((b) => b.tasks);
+
+        allTasks.map((t) =>
+          utils.task.getTaskDetail.setData(
+            { boardId: data.id, taskId: t.id },
+            (old) => {
+              if (!old) return old;
+              return {
+                ...old,
+                boardColumns: [
+                  ...data.boardColumns.map((b) => ({
+                    id: b.id,
+                    title: b.title,
+                  })),
+                ],
+              };
+            }
+          )
+        );
 
         if (variables.title) {
           utils.board.getBoards.setData(undefined, (old) => {
@@ -221,7 +236,7 @@ export default function EditBoard({ boardDetails }: Props) {
                             />
                             <X
                               onClick={() => remove(idx)}
-                              className="text-gray-400 cursor-pointer h-7 w-7"
+                              className="h-7 w-7 cursor-pointer text-gray-400"
                             />
                           </div>
                         </FormControl>
@@ -237,7 +252,7 @@ export default function EditBoard({ boardDetails }: Props) {
               onClick={() => append({ name: "" })}
               type="button"
               size="full"
-              className="w-full font-bold text-white capitalize dark:text-main-color"
+              className="w-full font-bold capitalize text-white dark:text-main-color"
             >
               + add new column
             </Button>
@@ -252,7 +267,7 @@ export default function EditBoard({ boardDetails }: Props) {
               >
                 {editingBoard ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     saving
                   </>
                 ) : (
