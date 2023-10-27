@@ -250,35 +250,95 @@ export const boardRouter = createTRPCRouter({
         throw new TRPCError(formatError(err));
       }
     }),
-    createColumn: protectedProcedure.input(z.object({columnName: z.string().min(2).max(50), boardId: z.string()})).mutation(async ({ctx: {prisma, session}, input}) => {
-      try{
+  createColumn: protectedProcedure
+    .input(
+      z.object({ columnName: z.string().min(2).max(50), boardId: z.string() })
+    )
+    .mutation(async ({ ctx: { prisma, session }, input }) => {
+      try {
         await prisma.board.findUniqueOrThrow({
           where: {
             id: input.boardId,
             user: {
-              id: session.user.id
-            }
+              id: session.user.id,
+            },
           },
-        })
+        });
         return await prisma.boardColumn.create({
           data: {
             title: input.columnName,
             columnColor: pickColumnColor(),
             board: {
               connect: {
-                id: input.boardId
-              }
-            }
+                id: input.boardId,
+              },
+            },
           },
           select: {
             id: true,
             title: true,
-            columnColor: true
-          }
-        })
-      }catch(err){
+            columnColor: true,
+          },
+        });
+      } catch (err) {
         console.log(err);
         throw new TRPCError(formatError(err));
       }
-    })
+    }),
+  reorderColumn: protectedProcedure
+    .input(
+      z.object({
+        newVersion: z.object({ id: z.string() }).array(),
+        boardId: z.string(),
+      })
+    )
+    .mutation(async ({ ctx: { session, prisma }, input }) => {
+      try {
+        return await prisma.board.update({
+          where: {
+            id: input.boardId,
+            user: {
+              id: session.user.id,
+            },
+          },
+          data: {
+            // boardColumns: {
+            //   set: [],
+            //   connect: input.newVersion,
+            // },
+          },
+          select: {
+            boardColumns: {
+              select: {
+                id: true,
+                title: true,
+                columnColor: true,
+                tasks: {
+                  select: {
+                    id: true,
+                    title: true,
+                    subTasks: {
+                      where: {
+                        completed: true,
+                      },
+                      select: {
+                        id: true,
+                      },
+                    },
+                    _count: {
+                      select: {
+                        subTasks: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        });
+      } catch (err) {
+        console.log(err);
+        throw new TRPCError(formatError(err));
+      }
+    }),
 });

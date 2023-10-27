@@ -30,6 +30,7 @@ import Task from "~/components/Task";
 import TasksGroup from "~/components/TasksGroup";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { ScrollArea } from "~/components/ui/scroll-area";
+import { useToast } from "~/components/ui/use-toast";
 import { RouterOutputs, api } from "~/lib/api";
 import { useSidebar } from "~/lib/hooks/use-sidebar";
 import { useModal } from "~/lib/hooks/useModal";
@@ -52,6 +53,7 @@ export default function Board({
     columnId: string;
   } | null>(null);
   const utils = api.useContext();
+  const { toast } = useToast();
 
   const { data: currentBoard } = api.board.getSingleBoard.useQuery(
     { boardID },
@@ -59,6 +61,17 @@ export default function Board({
       enabled: !!userSession,
     }
   );
+
+  const { mutate: reorderColumnsMutation, isLoading: reorderingColumns } =
+    api.board.reorderColumn.useMutation({
+      onError: (err) => {
+        console.log(err);
+        toast({
+          variant: "destructive",
+          description: "Server error. Please try again later",
+        });
+      },
+    });
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -78,7 +91,7 @@ export default function Board({
   if (!currentBoard) {
     return (
       <Alert variant="destructive" className="m-4 h-fit bg-board-background">
-        <AlertCircle className="h-4 w-4" />
+        <AlertCircle className="w-4 h-4" />
         <AlertTitle>Error</AlertTitle>
         <AlertDescription>
           Board not found. Please enter a valid board id.
@@ -107,30 +120,47 @@ export default function Board({
     const { active, over } = event;
     if (!over) return;
 
-    const activeColumnId = active.id;
-    const overColumnId = over.id;
+    if (
+      active.data.current?.type === "Column" &&
+      over.data.current?.type === "Column"
+    ) {
+      const activeColumnId = active.id;
+      const overColumnId = over.id;
 
-    if (activeColumnId === overColumnId) return; //?
-    console.log("after");
+      if (activeColumnId === overColumnId) return; //?
 
-    utils.board.getSingleBoard.setData({ boardID }, (old) => {
-      if (!old) return old;
-      const activeColumnIndex = old.boardColumns.findIndex(
-        (col) => col.id === activeColumnId
-      );
-      const overColumnIndex = old.boardColumns.findIndex(
-        (col) => col.id === overColumnId
-      );
+      let reorderedColumns: { id: string }[] | null = null;
 
-      return {
-        ...old,
-        boardColumns: arrayMove(
+      utils.board.getSingleBoard.setData({ boardID }, (old) => {
+        if (!old) return old;
+        const activeColumnIndex = old.boardColumns.findIndex(
+          (col) => col.id === activeColumnId
+        );
+        const overColumnIndex = old.boardColumns.findIndex(
+          (col) => col.id === overColumnId
+        );
+
+        const boardColumns = arrayMove(
           old.boardColumns,
           activeColumnIndex,
           overColumnIndex
-        ),
-      };
-    });
+        );
+
+        reorderedColumns = boardColumns.map((b) => ({ id: b.id }));
+
+        return {
+          ...old,
+          boardColumns,
+        };
+      });
+
+      if (reorderedColumns) {
+        reorderColumnsMutation({
+          newVersion: reorderedColumns,
+          boardId: boardID,
+        });
+      }
+    }
   }
 
   function handleDragOver(event: DragOverEvent) {

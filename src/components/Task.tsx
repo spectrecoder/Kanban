@@ -28,7 +28,7 @@ export default function Task({ task, columnId }: TaskProps) {
       task,
       columnId,
     },
-    // animateLayoutChanges: () => false,
+    animateLayoutChanges: () => false,
   });
 
   const style = {

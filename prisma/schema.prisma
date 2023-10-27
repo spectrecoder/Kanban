@@ -72,8 +72,6 @@ model Board {
     boardColumns BoardColumn[]
     user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId       String        @db.ObjectId
-
-    // @@unique([id, userId])
 }
 
 model BoardColumn {
