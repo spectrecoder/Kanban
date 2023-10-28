@@ -52,4 +52,66 @@ export const userRouter = createTRPCRouter({
         throw new TRPCError(formatError(err));
       }
     }),
+  userStatistics: protectedProcedure.query(
+    async ({ ctx: { prisma, session } }) => {
+      try {
+        const statistics = await prisma.user.findUniqueOrThrow({
+          where: {
+            id: session.user.id,
+          },
+          select: {
+            _count: {
+              select: {
+                boards: true,
+              },
+            },
+            boards: {
+              select: {
+                boardColumns: {
+                  select: {
+                    _count: {
+                      select: {
+                        tasks: true,
+                      },
+                    },
+                    tasks: {
+                      select: {
+                        _count: {
+                          select: {
+                            subTasks: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        });
+
+        return {
+          totalBoards: statistics._count.boards,
+          totalTasks: statistics.boards.reduce(
+            (acc, elm) =>
+              acc + elm.boardColumns.reduce((a, t) => a + t._count.tasks, 0),
+            0
+          ),
+          totalSubtasks: statistics.boards.reduce(
+            (acc, elm) =>
+              acc +
+              elm.boardColumns.reduce(
+                (a, t) =>
+                  a + t.tasks.reduce((acc, st) => acc + st._count.subTasks, 0),
+                0
+              ),
+            0
+          ),
+        };
+      } catch (err) {
+        console.log(err);
+        throw new TRPCError(formatError(err));
+      }
+    }
+  ),
 });

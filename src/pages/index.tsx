@@ -1,8 +1,10 @@
-import { KanbanSquare } from "lucide-react";
+import { createServerSideHelpers } from "@trpc/react-query/server";
+import { BookOpenCheck, KanbanSquare, ListChecks } from "lucide-react";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { signOut } from "next-auth/react";
 import Head from "next/head";
 import Image from "next/image";
+import SuperJSON from "superjson";
 import CommandMenu from "~/components/CommandMenu";
 import Overview from "~/components/Overview";
 import RecentTasks from "~/components/RecentTasks";
@@ -16,13 +18,18 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { ScrollArea } from "~/components/ui/scroll-area";
+import { api } from "~/lib/api";
 import { useCreateBoard } from "~/lib/hooks/use-create-board";
 import { avatarFallback } from "~/lib/utils";
+import { appRouter } from "~/server/api/root";
+import { createInnerTRPCContext } from "~/server/api/trpc";
 import { getServerAuthSession } from "~/server/auth";
 
 export default function Home({
   userSession,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
+  const { data: statistic } = api.user.userStatistics.useQuery();
+
   return (
     <>
       <Head>
@@ -60,48 +67,54 @@ export default function Home({
               <Card className="border border-solid border-main-border bg-main-background">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">
-                    Total Revenue
+                    Total Boards
                   </CardTitle>
                   <KanbanSquare className="h-5 w-5 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">$45,231.89</div>
+                  <div className="text-2xl font-bold">
+                    {statistic?.totalBoards ?? 0}
+                  </div>
                 </CardContent>
               </Card>
 
               <Card className="border border-solid border-main-border bg-main-background">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">
-                    Total Revenue
+                    Total Tasks
                   </CardTitle>
-                  <KanbanSquare className="h-5 w-5 text-muted-foreground" />
+                  <BookOpenCheck className="h-5 w-5 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">$45,231.89</div>
+                  <div className="text-2xl font-bold">
+                    {statistic?.totalTasks ?? 0}
+                  </div>
                 </CardContent>
               </Card>
 
               <Card className="border border-solid border-main-border bg-main-background">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">
-                    Total Revenue
+                    Total Subtasks
                   </CardTitle>
-                  <KanbanSquare className="h-5 w-5 text-muted-foreground" />
+                  <ListChecks className="h-5 w-5 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">$45,231.89</div>
+                  <div className="text-2xl font-bold">
+                    {statistic?.totalSubtasks ?? 0}
+                  </div>
                 </CardContent>
               </Card>
 
               <Card className="border border-solid border-main-border bg-main-background">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">
-                    Total Revenue
+                    Current Plan
                   </CardTitle>
                   <KanbanSquare className="h-5 w-5 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">$45,231.89</div>
+                  <div className="text-2xl font-bold">Free</div>
                 </CardContent>
               </Card>
             </div>
@@ -109,7 +122,9 @@ export default function Home({
             <div className="grid grid-cols-7 gap-4">
               <Card className="col-span-4 border border-solid border-main-border bg-main-background">
                 <CardHeader>
-                  <CardTitle>Overview</CardTitle>
+                  <CardTitle>
+                    Tasks Overview ({new Date().getFullYear()})
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="pl-2">
                   <Overview />
@@ -117,9 +132,9 @@ export default function Home({
               </Card>
               <Card className="col-span-3 border border-solid border-main-border bg-main-background">
                 <CardHeader>
-                  <CardTitle>Recent Sales</CardTitle>
+                  <CardTitle>Recent Tasks</CardTitle>
                   <CardDescription>
-                    You made 265 sales this month.
+                    Tasks created recently by you.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -130,14 +145,6 @@ export default function Home({
 
             <footer className="pt-2 text-muted-foreground">
               Built by{" "}
-              <a
-                target="_blank"
-                href="https://github.com/shadcn/"
-                className="font-bold underline"
-              >
-                Shadcn
-              </a>{" "}
-              &{" "}
               <a
                 target="_blank"
                 href="https://github.com/arafat4693/"
@@ -167,9 +174,22 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   const userSession = (await getServerAuthSession(context))!;
 
+  const ssg = createServerSideHelpers({
+    router: appRouter,
+    ctx: createInnerTRPCContext({ session: userSession }),
+    transformer: SuperJSON,
+  });
+
+  await Promise.allSettled([
+    ssg.user.userStatistics.prefetch(),
+    ssg.task.recentTasks.prefetch(),
+    ssg.task.tasksStatistic.prefetch(),
+  ]);
+
   return {
     props: {
       userSession,
+      trpcState: ssg.dehydrate(),
     },
   };
 }

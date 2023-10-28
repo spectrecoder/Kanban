@@ -1,11 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { formatError } from "~/lib/utils";
-import {
-  createTRPCRouter,
-  publicProcedure,
-  protectedProcedure,
-} from "~/server/api/trpc";
+import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
 export const taskRouter = createTRPCRouter({
   create: protectedProcedure
@@ -320,4 +316,107 @@ export const taskRouter = createTRPCRouter({
         throw new TRPCError(formatError(err));
       }
     }),
+  recentTasks: protectedProcedure.query(
+    async ({ ctx: { prisma, session } }) => {
+      try {
+        return await prisma.task.findMany({
+          where: {
+            boardColumn: {
+              board: {
+                user: {
+                  id: session.user.id,
+                },
+              },
+            },
+          },
+          take: 5,
+          orderBy: {
+            createdAt: "desc",
+          },
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            _count: {
+              select: {
+                subTasks: true,
+              },
+            },
+            boardColumn: {
+              select: {
+                board: {
+                  select: {
+                    id: true,
+                  },
+                },
+              },
+            },
+          },
+        });
+      } catch (err) {
+        console.log(err);
+        throw new TRPCError(formatError(err));
+      }
+    }
+  ),
+  tasksStatistic: protectedProcedure.query(
+    async ({ ctx: { session, prisma } }) => {
+      const currentYear = new Date().getFullYear();
+
+      try {
+        const tasks = await prisma.task.findMany({
+          where: {
+            createdAt: {
+              gte: new Date(`${currentYear}-01-01`),
+              lte: new Date(`${currentYear}-12-30`),
+            },
+            boardColumn: {
+              board: {
+                user: {
+                  id: session.user.id,
+                },
+              },
+            },
+          },
+          select: {
+            createdAt: true,
+          },
+        });
+
+        // Initialize all months with a count of 0
+        const tasksByMonth = [
+          { name: "Jan", total: 0 },
+          { name: "Feb", total: 0 },
+          { name: "Mar", total: 0 },
+          { name: "Apr", total: 0 },
+          { name: "May", total: 0 },
+          { name: "Jun", total: 0 },
+          { name: "Jul", total: 0 },
+          { name: "Aug", total: 0 },
+          { name: "Sep", total: 0 },
+          { name: "Oct", total: 0 },
+          { name: "Nov", total: 0 },
+          { name: "Dec", total: 0 },
+        ];
+
+        // Update the counts for the months where tasks were created
+        tasks.forEach((task) => {
+          const monthName = new Intl.DateTimeFormat("en", {
+            month: "short",
+          }).format(task.createdAt);
+          const index = tasksByMonth.findIndex(
+            (month) => month.name === monthName
+          );
+          if (index !== -1) {
+            tasksByMonth[index]!.total += 1;
+          }
+        });
+
+        return tasksByMonth;
+      } catch (err) {
+        console.log(err);
+        throw new TRPCError(formatError(err));
+      }
+    }
+  ),
 });
