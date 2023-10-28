@@ -22,7 +22,7 @@ export default function ModeToggle() {
   if (!mounted) return null;
 
   return (
-    <div className="mx-4 mt-5 flex items-center justify-center gap-x-5 rounded-md bg-board-background py-3">
+    <div className="mx-4 mt-3.5 flex items-center justify-center gap-x-5 rounded-md bg-board-background py-3">
       <Sun className="h-[1.2rem] w-[1.2rem] text-[#838FA2]" />
       <Switch
         id="mode-toggle"

@@ -7,8 +7,8 @@ interface useModalStore {
     | "deleteBoard"
     | "editBoard"
     | "createTask"
-    | "sidebar"
     | "createColumn"
+    | "allPlans"
     | "";
   //   isOpen: boolean;
   onOpen: (type: useModalStore["type"]) => void;

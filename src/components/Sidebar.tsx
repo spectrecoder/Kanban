@@ -8,6 +8,7 @@ import { useSidebar } from "~/lib/hooks/use-sidebar";
 import { useModal } from "~/lib/hooks/useModal";
 import ModeToggle from "./ModeToggle";
 import { ScrollArea } from "./ui/scroll-area";
+import { QuotaBar } from "./QuotaBar";
 
 const ACTIVE = true;
 
@@ -75,6 +76,7 @@ export default function Sidebar() {
           </p>
         </button>
 
+        <QuotaBar />
         <ModeToggle />
         <button
           onClick={hideSidebar}

@@ -1,9 +1,8 @@
 import { createServerSideHelpers } from "@trpc/react-query/server";
-import { BookOpenCheck, KanbanSquare, ListChecks } from "lucide-react";
+import { BookOpenCheck, KanbanSquare, ListChecks, Receipt } from "lucide-react";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { signOut } from "next-auth/react";
 import Head from "next/head";
-import Image from "next/image";
 import SuperJSON from "superjson";
 import CommandMenu from "~/components/CommandMenu";
 import Overview from "~/components/Overview";
@@ -19,7 +18,6 @@ import {
 } from "~/components/ui/card";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { api } from "~/lib/api";
-import { useCreateBoard } from "~/lib/hooks/use-create-board";
 import { avatarFallback } from "~/lib/utils";
 import { appRouter } from "~/server/api/root";
 import { createInnerTRPCContext } from "~/server/api/trpc";
@@ -111,7 +109,7 @@ export default function Home({
                   <CardTitle className="text-sm font-medium">
                     Current Plan
                   </CardTitle>
-                  <KanbanSquare className="h-5 w-5 text-muted-foreground" />
+                  <Receipt className="h-5 w-5 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">Free</div>
