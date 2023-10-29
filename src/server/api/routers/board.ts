@@ -2,12 +2,9 @@ import { Prisma, PrismaClient } from "@prisma/client";
 import { DefaultArgs } from "@prisma/client/runtime/library";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { UsageExceededError } from "~/lib/exceptions";
 import { formatError, pickColumnColor } from "~/lib/utils";
-import {
-  createTRPCRouter,
-  publicProcedure,
-  protectedProcedure,
-} from "~/server/api/trpc";
+import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
 interface GetBoardDetailsProps {
   prisma: PrismaClient<Prisma.PrismaClientOptions, never, DefaultArgs>;
@@ -71,6 +68,7 @@ export const boardRouter = createTRPCRouter({
     .mutation(
       async ({ ctx: { prisma, session }, input: { title, columns } }) => {
         try {
+          //  http://localhost:3000/api/trpc/board.create?batch=1
           const newBoard = await prisma.board.create({
             data: {
               title,
@@ -95,7 +93,11 @@ export const boardRouter = createTRPCRouter({
           return newBoard;
         } catch (err) {
           console.log(err);
-          throw new TRPCError(formatError(err));
+          if (err instanceof UsageExceededError) {
+            throw new UsageExceededError();
+          } else {
+            throw new Error("Server error. Please try again later.");
+          }
         }
       }
     ),

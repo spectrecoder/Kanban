@@ -54,6 +54,12 @@ model User {
     accounts       Account[]
     sessions       Session[]
     boards         Board[]
+
+    usage                  Int       @default(0)
+    usageLimit             Int       @default(5)
+    plan                   String    @default("free")
+    stripeCustomerId       String?   @unique
+    stripeCurrentPeriodEnd DateTime?
 }
 
 model VerificationToken {

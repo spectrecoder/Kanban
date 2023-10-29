@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { COLUMN_COLORS } from "./constants";
+import { env } from "~/env.mjs";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -33,4 +34,8 @@ export function pickColumnColor(): string {
   return COLUMN_COLORS[
     Math.floor(Math.random() * COLUMN_COLORS.length)
   ] as string;
+}
+
+export function absoluteUrl(path: string) {
+  return `${env.NEXT_PUBLIC_APP_URL}${path}`;
 }

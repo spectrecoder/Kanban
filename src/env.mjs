@@ -28,6 +28,8 @@ export const env = createEnv({
     CLOUDINARY_CLOUD_NAME: z.string(),
     CLOUDINARY_API_KEY: z.string(),
     CLOUDINARY_API_SECRET: z.string(),
+    STRIPE_API_KEY: z.string(),
+    NEXT_PUBLIC_APP_URL: z.string(),
   },
 
   /**
@@ -55,6 +57,8 @@ export const env = createEnv({
     CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME,
     CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
     CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
+    STRIPE_API_KEY: process.env.STRIPE_API_KEY,
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation.

@@ -25,6 +25,7 @@ import {
   FormMessage,
 } from "./ui/form";
 import { useToast } from "./ui/use-toast";
+import { UsageExceededError } from "~/lib/exceptions";
 
 const formSchema = z.object({
   boardName: z
@@ -77,7 +78,7 @@ export default function CreateBoard() {
         console.log(err);
         toast({
           variant: "destructive",
-          description: "Server error. Please try again later",
+          description: err.shape?.message,
         });
       },
     });

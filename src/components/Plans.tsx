@@ -8,9 +8,30 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 import { Badge } from "./ui/badge";
+import { api } from "~/lib/api";
+import { useToast } from "./ui/use-toast";
 
 export default function Plans() {
+  const { toast } = useToast();
+
   const [onClose, type] = useModal((state) => [state.onClose, state.type]);
+
+  const { mutate: checkout, isLoading } = api.subscription.checkout.useMutation(
+    {
+      onSuccess: (data) => {
+        if (data.url) {
+          window.location.href = data.url;
+        }
+      },
+      onError: (err) => {
+        console.log(err);
+        toast({
+          variant: "destructive",
+          description: "Server error. Please try again later",
+        });
+      },
+    }
+  );
 
   return (
     <Dialog open={type === "allPlans"} onOpenChange={onClose}>
@@ -36,7 +57,7 @@ export default function Plans() {
             <p className="my-3 flex justify-center text-sm tracking-wide text-gray-600 dark:text-gray-300">
               5 Boards Per Month
             </p>
-            <Button className="w-full">Choose plan</Button>
+            <Button className="w-full">Current plan</Button>
           </div>
 
           <div className="relative rounded-md bg-board-background p-3">
@@ -60,7 +81,12 @@ export default function Plans() {
             <p className="my-3 flex justify-center text-sm tracking-wide text-gray-600 dark:text-gray-300">
               25 Boards Per Month
             </p>
-            <Button variant="purple" className="w-full">
+            <Button
+              variant="purple"
+              onClick={() => checkout({ plan: "pro", recurring: "monthly" })}
+              disabled={isLoading}
+              className="w-full"
+            >
               Choose plan
             </Button>
           </div>
@@ -80,7 +106,15 @@ export default function Plans() {
             <p className="my-3 flex justify-center text-sm tracking-wide text-gray-600 dark:text-gray-300">
               50 Boards Per Month
             </p>
-            <Button className="w-full">Choose plan</Button>
+            <Button
+              className="w-full"
+              disabled={isLoading}
+              onClick={() =>
+                checkout({ plan: "enterprise", recurring: "monthly" })
+              }
+            >
+              Choose plan
+            </Button>
           </div>
         </section>
       </DialogContent>
