@@ -49,4 +49,73 @@ export const subscriptionRouter = createTRPCRouter({
         return new Response(null, { status: 500 });
       }
     }),
+  manage: protectedProcedure.mutation(async ({ ctx: { prisma, session } }) => {
+    try {
+      const user = await prisma.user.findUniqueOrThrow({
+        where: {
+          id: session.user.id,
+        },
+        select: {
+          plan: true,
+          stripeCustomerId: true,
+        },
+      });
+
+      if (user.plan !== "free" && user.stripeCustomerId) {
+        const { url } = await stripe.billingPortal.sessions.create({
+          customer: user.stripeCustomerId,
+          return_url: billingUrl,
+        });
+
+        return { url };
+      } else {
+        throw new Error("You are in free plan.");
+      }
+    } catch (err) {
+      console.log(err);
+      throw new Error("Server error. Please try again later.");
+    }
+  }),
+  getUserSubscriptionPlan: protectedProcedure.query(
+    async ({ ctx: { prisma, session } }) => {
+      try {
+        const user = await prisma.user.findUniqueOrThrow({
+          where: {
+            id: session.user.id,
+          },
+          select: {
+            plan: true,
+            stripeCustomerId: true,
+            stripeCurrentPeriodEnd: true,
+            usage: true,
+            usageLimit: true,
+          },
+        });
+
+        let isCanceled = false;
+
+        if (user.plan !== "free" && user.stripeCustomerId) {
+          const subscriptionId = (await stripe.subscriptions
+            .list({
+              customer: user.stripeCustomerId,
+            })
+            .then((res) => res?.data[0]?.id))!;
+
+          const stipePlan = await stripe.subscriptions.retrieve(subscriptionId);
+          isCanceled = stipePlan.cancel_at_period_end;
+        }
+
+        return {
+          plan: user.plan,
+          stripeCurrentPeriodEnd: user.stripeCurrentPeriodEnd,
+          isCanceled,
+          usage: user.usage,
+          usageLimit: user.usageLimit,
+        };
+      } catch (err) {
+        console.log(err);
+        throw new Error("Server error. Please try again later.");
+      }
+    }
+  ),
 });

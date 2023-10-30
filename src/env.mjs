@@ -29,6 +29,7 @@ export const env = createEnv({
     CLOUDINARY_API_KEY: z.string(),
     CLOUDINARY_API_SECRET: z.string(),
     STRIPE_API_KEY: z.string(),
+    STRIPE_WEBHOOK_SECRET: z.string().min(1),
     NEXT_PUBLIC_APP_URL: z.string(),
   },
 
@@ -58,6 +59,7 @@ export const env = createEnv({
     CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
     CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
     STRIPE_API_KEY: process.env.STRIPE_API_KEY,
+    STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   },
   /**

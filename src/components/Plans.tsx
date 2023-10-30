@@ -10,6 +10,11 @@ import {
 import { Badge } from "./ui/badge";
 import { api } from "~/lib/api";
 import { useToast } from "./ui/use-toast";
+import { Loader2 } from "lucide-react";
+import { getPlanFromPriceSlug } from "~/lib/stripe/utils";
+
+const PRO = getPlanFromPriceSlug("pro")!;
+const ENTERPRISE = getPlanFromPriceSlug("enterprise")!;
 
 export default function Plans() {
   const { toast } = useToast();
@@ -68,18 +73,18 @@ export default function Plans() {
               Popular
             </Badge>
             <h3 className="flex justify-center text-lg font-medium tracking-widest">
-              Pro
+              {PRO.name}
             </h3>
             <h2 className="mt-2 flex items-baseline justify-center gap-x-2">
               <span className="text-3xl font-bold tracking-tight text-primary">
-                $5
+                ${PRO.price.monthly.amount}
               </span>
               <span className="text-sm font-semibold leading-6 tracking-wide text-gray-600 dark:text-gray-300">
                 USD
               </span>
             </h2>
             <p className="my-3 flex justify-center text-sm tracking-wide text-gray-600 dark:text-gray-300">
-              25 Boards Per Month
+              {PRO.quota} Boards Per Month
             </p>
             <Button
               variant="purple"
@@ -87,24 +92,31 @@ export default function Plans() {
               disabled={isLoading}
               className="w-full"
             >
-              Choose plan
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Loading
+                </>
+              ) : (
+                "Choose plan"
+              )}
             </Button>
           </div>
 
           <div className="rounded-md bg-board-background p-3">
             <h3 className="flex justify-center text-lg font-medium tracking-widest">
-              Enterprise
+              {ENTERPRISE.name}
             </h3>
             <h2 className="mt-2 flex items-baseline justify-center gap-x-2">
               <span className="text-3xl font-bold tracking-tight text-primary">
-                $10
+                ${ENTERPRISE.price.monthly.amount}
               </span>
               <span className="text-sm font-semibold leading-6 tracking-wide text-gray-600 dark:text-gray-300">
                 USD
               </span>
             </h2>
             <p className="my-3 flex justify-center text-sm tracking-wide text-gray-600 dark:text-gray-300">
-              50 Boards Per Month
+              {ENTERPRISE.quota} Boards Per Month
             </p>
             <Button
               className="w-full"
@@ -113,7 +125,14 @@ export default function Plans() {
                 checkout({ plan: "enterprise", recurring: "monthly" })
               }
             >
-              Choose plan
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Loading
+                </>
+              ) : (
+                "Choose plan"
+              )}
             </Button>
           </div>
         </section>

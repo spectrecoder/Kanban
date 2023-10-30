@@ -9,6 +9,7 @@ interface useModalStore {
     | "createTask"
     | "createColumn"
     | "allPlans"
+    | "managePlan"
     | "";
   //   isOpen: boolean;
   onOpen: (type: useModalStore["type"]) => void;
