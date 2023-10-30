@@ -95,7 +95,13 @@ export default async function handler(
               stripeCustomerId: subscription.customer as string,
             },
             data: {
-              usage: new Date() === user.stripeCurrentPeriodEnd ? 0 : undefined,
+              usage: user.stripeCurrentPeriodEnd
+                ? new Date(subscription.current_period_end * 1000).getTime() >
+                  // new Date(1701380480000).getTime() >
+                  new Date(user.stripeCurrentPeriodEnd).getTime()
+                  ? 0
+                  : undefined
+                : undefined,
               stripeCurrentPeriodEnd: new Date(
                 subscription.current_period_end * 1000
               ),
@@ -117,9 +123,6 @@ export default async function handler(
               stripeCustomerId,
             },
             data: {
-              stripeCurrentPeriodEnd: new Date(
-                subscriptionSession.current_period_end * 1000
-              ),
               usageLimit: plan?.quota,
               plan: plan?.slug,
             },
@@ -139,6 +142,7 @@ export default async function handler(
               usageLimit: 5,
               plan: "free",
               stripeCustomerId: null,
+              stripeCurrentPeriodEnd: null,
             },
           });
         }
