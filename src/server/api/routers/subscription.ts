@@ -15,7 +15,7 @@ export const subscriptionRouter = createTRPCRouter({
     .input(
       z.object({
         plan: z.enum(["pro", "enterprise"]),
-        recurring: z.enum(["monthly"]),
+        recurring: z.enum(["monthly", "yearly"]),
       })
     )
     .mutation(async ({ ctx: { session }, input }) => {

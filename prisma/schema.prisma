@@ -59,6 +59,7 @@ model User {
     usageLimit             Int       @default(5)
     plan                   String    @default("free")
     stripeCustomerId       String?   @unique
+    stripePriceId          String?   @unique
     stripeCurrentPeriodEnd DateTime?
 }
 

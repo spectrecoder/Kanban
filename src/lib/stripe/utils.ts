@@ -1,5 +1,8 @@
 export function getPlanFromPriceId(priceId: string) {
-  return PLANS.find((plan) => plan.price.monthly.priceIds.test === priceId);
+  return (
+    PLANS.find((plan) => plan.price.monthly.priceIds.test === priceId) ||
+    PLANS.find((plan) => plan.price.yearly.priceIds.test === priceId)
+  );
 }
 
 export function getPlanFromPriceSlug(priceSlug: "pro" | "enterprise") {
@@ -10,6 +13,7 @@ export const PLANS = [
   {
     name: "Pro",
     slug: "pro",
+    popular: true,
     quota: 25,
     price: {
       monthly: {
@@ -19,18 +23,19 @@ export const PLANS = [
           production: null,
         },
       },
-      // yearly: {
-      //   amount: 90,
-      //   priceIds: {
-      //     test: "price_1LoytoAlJJEpqkPVsWjM4tB9",
-      //     production: "price_1LodNLAlJJEpqkPVRxUyCQgZ",
-      //   },
-      // },
+      yearly: {
+        amount: 50,
+        priceIds: {
+          test: "price_1O7E36ENdk7SXFEHmcUwziLZ",
+          production: null,
+        },
+      },
     },
   },
   {
     name: "Enterprise",
     slug: "enterprise",
+    popular: false,
     quota: 50,
     price: {
       monthly: {
@@ -40,13 +45,13 @@ export const PLANS = [
           production: null,
         },
       },
-      // yearly: {
-      //   amount: 490,
-      //   priceIds: {
-      //     test: "price_1LoyrCAlJJEpqkPVgIlNG23q",
-      //     production: "price_1LodLoAlJJEpqkPVJdwv5zrG",
-      //   },
-      // },
+      yearly: {
+        amount: 100,
+        priceIds: {
+          test: "price_1O7E3wENdk7SXFEHrS1io0zF",
+          production: null,
+        },
+      },
     },
   },
 ];

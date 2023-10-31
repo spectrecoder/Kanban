@@ -9,7 +9,7 @@ import { prisma } from "~/server/db";
 const relevantEvents = new Set([
   "checkout.session.completed",
   "invoice.payment_succeeded",
-  "customer.subscription.updated",
+  // "customer.subscription.updated",
   "customer.subscription.deleted",
 ]);
 
@@ -52,8 +52,23 @@ export default async function handler(
             checkoutSession.subscription as string
           );
 
-          const priceId = subscription.items.data[0]!.price.id;
+          const priceId = subscription.items.data[0]?.price.id;
+
+          if (!priceId) throw new Error("Price Id is missing");
+
           const plan = getPlanFromPriceId(priceId);
+
+          let usageLimit: number | undefined = undefined;
+
+          if (
+            subscription.items.data[0]!.price.recurring?.interval === "month"
+          ) {
+            usageLimit = plan?.quota;
+          } else if (
+            subscription.items.data[0]!.price.recurring?.interval === "year"
+          ) {
+            usageLimit = plan?.quota ? plan.quota * 12 : undefined;
+          }
 
           // Update the user stripe into in our database.
           // Since this is the initial subscription, we need to update
@@ -64,15 +79,16 @@ export default async function handler(
             },
             data: {
               stripeCustomerId: subscription.customer as string,
+              stripePriceId: priceId,
               stripeCurrentPeriodEnd: new Date(
                 subscription.current_period_end * 1000
               ),
-              usageLimit: plan?.quota,
+              usageLimit,
               plan: plan?.slug,
             },
           });
         } else if (event.type === "invoice.payment_succeeded") {
-          // gets called in initial checkout
+          // gets called in checkout and subscription update event
           console.log("invoice.payment_succeeded");
 
           const invoiceSession = event.data.object;
@@ -81,49 +97,68 @@ export default async function handler(
             invoiceSession.subscription as string
           );
 
+          const priceId = subscription.items.data[0]?.price.id;
+
+          if (!priceId) throw new Error("Price Id is missing");
+
           const user = await prisma.user.findUniqueOrThrow({
             where: {
               stripeCustomerId: subscription.customer as string,
             },
             select: {
               stripeCurrentPeriodEnd: true,
+              stripePriceId: true,
             },
           });
+
+          console.log(user);
+
+          if (!user.stripePriceId || !user.stripeCurrentPeriodEnd)
+            throw new Error("priceId or currentPeriodEnd is missing");
+
+          const plan = getPlanFromPriceId(priceId);
+
+          let usageLimit: number | undefined = undefined;
+
+          if (
+            subscription.items.data[0]?.price.recurring?.interval === "month"
+          ) {
+            usageLimit = plan?.quota;
+          } else if (
+            subscription.items.data[0]?.price.recurring?.interval === "year"
+          ) {
+            usageLimit = plan?.quota ? plan.quota * 12 : undefined;
+          }
+
+          const prevPlan = await stripe.plans.retrieve(user.stripePriceId);
+          const prevDate = user.stripeCurrentPeriodEnd;
+
+          function setUsage() {
+            if (
+              new Date(subscription.current_period_end * 1000).getTime() >
+              new Date(prevDate).getTime()
+            ) {
+              if (
+                prevPlan.interval === "month" &&
+                subscription.items.data[0]?.price.recurring?.interval === "year"
+              )
+                return undefined;
+              return 0;
+            }
+            return undefined;
+          }
 
           await prisma.user.update({
             where: {
               stripeCustomerId: subscription.customer as string,
             },
             data: {
-              usage: user.stripeCurrentPeriodEnd
-                ? new Date(subscription.current_period_end * 1000).getTime() >
-                  // new Date(1701380480000).getTime() >
-                  new Date(user.stripeCurrentPeriodEnd).getTime()
-                  ? 0
-                  : undefined
-                : undefined,
+              usage: setUsage(),
+              stripePriceId: priceId,
               stripeCurrentPeriodEnd: new Date(
                 subscription.current_period_end * 1000
               ),
-            },
-          });
-        } else if (event.type === "customer.subscription.updated") {
-          // gets called in initial checkout
-          console.log("customer.subscription.updated");
-
-          const subscriptionSession = event.data.object;
-
-          const priceId = subscriptionSession.items.data[0]!.price.id;
-
-          const plan = getPlanFromPriceId(priceId);
-          const stripeCustomerId = subscriptionSession.customer.toString();
-
-          await prisma.user.update({
-            where: {
-              stripeCustomerId,
-            },
-            data: {
-              usageLimit: plan?.quota,
+              usageLimit,
               plan: plan?.slug,
             },
           });
@@ -139,9 +174,11 @@ export default async function handler(
               stripeCustomerId,
             },
             data: {
+              usage: 0,
               usageLimit: 5,
               plan: "free",
               stripeCustomerId: null,
+              stripePriceId: null,
               stripeCurrentPeriodEnd: null,
             },
           });
@@ -170,3 +207,43 @@ export const config = {
     bodyParser: false,
   },
 };
+
+/* 
+else if (event.type === "customer.subscription.updated") {
+          // gets called also in checkout event
+          console.log("customer.subscription.updated");
+
+          const subscriptionSession = event.data.object;
+
+          const priceId = subscriptionSession.items.data[0]?.price.id;
+
+          if (!priceId) throw new Error("PriceId is missing");
+
+          const stripeCustomerId = subscriptionSession.customer.toString();
+          const plan = getPlanFromPriceId(priceId);
+
+          let usageLimit: number | undefined = undefined;
+
+          if (
+            subscriptionSession.items.data[0]?.price.recurring?.interval ===
+            "month"
+          ) {
+            usageLimit = plan?.quota;
+          } else if (
+            subscriptionSession.items.data[0]?.price.recurring?.interval ===
+            "year"
+          ) {
+            usageLimit = plan?.quota ? plan.quota * 12 : undefined;
+          }
+
+          await prisma.user.update({
+            where: {
+              stripeCustomerId,
+            },
+            data: {
+              usageLimit,
+              plan: plan?.slug,
+            },
+          });
+        } 
+*/

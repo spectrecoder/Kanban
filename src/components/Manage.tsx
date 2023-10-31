@@ -56,7 +56,7 @@ export default function Manage({ subscriptionPlan }: Props) {
           </strong>{" "}
           plan has{" "}
           <strong className="font-bold">{subscriptionPlan.usageLimit}</strong>{" "}
-          boards per month
+          boards
         </p>
         <DialogFooter className="flex w-full items-center sm:justify-between">
           <Button
