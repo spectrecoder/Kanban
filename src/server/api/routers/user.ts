@@ -60,6 +60,7 @@ export const userRouter = createTRPCRouter({
             id: session.user.id,
           },
           select: {
+            plan: true,
             _count: {
               select: {
                 boards: true,
@@ -91,6 +92,7 @@ export const userRouter = createTRPCRouter({
         });
 
         return {
+          currentPlan: statistics.plan,
           totalBoards: statistics._count.boards,
           totalTasks: statistics.boards.reduce(
             (acc, elm) =>

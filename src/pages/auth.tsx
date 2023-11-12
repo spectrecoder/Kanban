@@ -18,7 +18,10 @@ export default function Auth() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className="flex h-screen items-center justify-center" ref={parent}>
+      <main
+        className="mx-3 flex h-screen items-center justify-center sm:mx-0"
+        ref={parent}
+      >
         {currentCard === "Login" ? (
           <Login setCurrentCard={setCurrentCard} />
         ) : (
@@ -30,21 +33,3 @@ export default function Auth() {
 }
 
 Auth.isLayout = false;
-
-// export async function getServerSideProps(context: GetServerSidePropsContext) {
-//   const userSession = await getServerAuthSession(context);
-
-//   if (userSession === null) {
-//     return {
-//       props: {},
-//     };
-//   }
-
-//   return {
-//     redirect: {
-//       permanent: false,
-//       destination: "/",
-//     },
-//     props: {},
-//   };
-// }

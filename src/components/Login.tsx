@@ -83,7 +83,7 @@ export default function Login({ setCurrentCard }: Props) {
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4">
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid gap-4 sm:grid-cols-2">
           <Button variant="purple" onClick={() => void signIn("discord")}>
             Discord
           </Button>
@@ -96,7 +96,7 @@ export default function Login({ setCurrentCard }: Props) {
             <span className="w-full border-t" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="px-2 bg-board-background text-muted-foreground">
+            <span className="bg-board-background px-2 text-muted-foreground">
               Or continue with
             </span>
           </div>
@@ -139,7 +139,7 @@ export default function Login({ setCurrentCard }: Props) {
             <Button disabled={isLoading} className="w-full">
               {isLoading ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Logging in
                 </>
               ) : (

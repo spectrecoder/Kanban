@@ -106,11 +106,8 @@ export const subscriptionRouter = createTRPCRouter({
         }
 
         return {
-          plan: user.plan,
-          stripeCurrentPeriodEnd: user.stripeCurrentPeriodEnd,
+          ...user,
           isCanceled,
-          usage: user.usage,
-          usageLimit: user.usageLimit,
         };
       } catch (err) {
         console.log(err);

@@ -14,7 +14,7 @@ import { Loader2 } from "lucide-react";
 import { PLANS, getPlanFromPriceSlug } from "~/lib/stripe/utils";
 import { useState } from "react";
 import { Switch } from "./ui/switch";
-import Confetti from "react-confetti";
+import ConfettiExplosion from "react-confetti-explosion";
 
 const PRO = getPlanFromPriceSlug("pro")!;
 const ENTERPRISE = getPlanFromPriceSlug("enterprise")!;
@@ -50,12 +50,12 @@ export default function Plans() {
           <DialogDescription>Choose a suitable plan for you.</DialogDescription>
         </DialogHeader>
 
-        {/* <Confetti
-          width={500}
-          height={500}
-          tweenDuration={1000}
-          recycle={false}
-        /> */}
+        {recurring === "yearly" && (
+          <ConfettiExplosion
+            style={{ left: "50%", position: "absolute", top: "10%" }}
+            zIndex={10000}
+          />
+        )}
 
         <div className="mx-auto mb-3 flex w-fit items-center justify-center gap-x-5 rounded-md bg-board-background px-5 py-3">
           <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
@@ -63,6 +63,7 @@ export default function Plans() {
           </p>
           <Switch
             id="mode-toggle"
+            checked={recurring === "yearly" ? true : false}
             onCheckedChange={() =>
               setRecurring((prev) =>
                 prev === "monthly" ? "yearly" : "monthly"

@@ -68,29 +68,53 @@ export const boardRouter = createTRPCRouter({
     .mutation(
       async ({ ctx: { prisma, session }, input: { title, columns } }) => {
         try {
-          //  http://localhost:3000/api/trpc/board.create?batch=1
-          const newBoard = await prisma.board.create({
-            data: {
-              title,
-              user: {
-                connect: {
-                  id: session.user.id,
-                },
-              },
-              boardColumns: {
-                create: columns.map((c) => ({
-                  title: c,
-                  columnColor: pickColumnColor(),
-                })),
-              },
+          const user = await prisma.user.findUniqueOrThrow({
+            where: {
+              id: session.user.id,
             },
             select: {
-              id: true,
-              title: true,
+              usage: true,
+              usageLimit: true,
             },
           });
 
-          return newBoard;
+          if (user.usage + 1 > user.usageLimit) throw new UsageExceededError();
+
+          return await prisma.$transaction(async (tx) => {
+            const newBoard = await tx.board.create({
+              data: {
+                title,
+                user: {
+                  connect: {
+                    id: session.user.id,
+                  },
+                },
+                boardColumns: {
+                  create: columns.map((c) => ({
+                    title: c,
+                    columnColor: pickColumnColor(),
+                  })),
+                },
+              },
+              select: {
+                id: true,
+                title: true,
+              },
+            });
+
+            await tx.user.update({
+              where: {
+                id: session.user.id,
+              },
+              data: {
+                usage: {
+                  increment: 1,
+                },
+              },
+            });
+
+            return newBoard;
+          });
         } catch (err) {
           console.log(err);
           if (err instanceof UsageExceededError) {

@@ -7,6 +7,7 @@ import SuperJSON from "superjson";
 import CommandMenu from "~/components/CommandMenu";
 import Overview from "~/components/Overview";
 import RecentTasks from "~/components/RecentTasks";
+import SidebarSheet from "~/components/SidebarSheet";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
 import {
@@ -38,6 +39,7 @@ export default function Home({
       <main className="relative flex-grow bg-board-background">
         <header className="flex items-center justify-between border-0 border-b border-solid border-main-border bg-main-background px-5 py-3.5">
           <figure className="flex w-full items-center gap-x-2">
+            <SidebarSheet />
             <Avatar>
               <AvatarImage
                 src={userSession.user.image || undefined}
@@ -47,7 +49,7 @@ export default function Home({
                 {avatarFallback(userSession.user.name!)}
               </AvatarFallback>
             </Avatar>
-            <figcaption className="text-2xl font-bold text-primary">
+            <figcaption className="hidden text-2xl font-bold text-primary sm:block">
               {userSession.user.name}
             </figcaption>
           </figure>
@@ -112,7 +114,12 @@ export default function Home({
                   <Receipt className="h-5 w-5 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">Free</div>
+                  <div className="text-2xl font-bold">
+                    {statistic
+                      ? statistic.currentPlan[0]?.toUpperCase() +
+                        statistic.currentPlan.slice(1)
+                      : "Error"}
+                  </div>
                 </CardContent>
               </Card>
             </div>

@@ -9,7 +9,6 @@ import { prisma } from "~/server/db";
 const relevantEvents = new Set([
   "checkout.session.completed",
   "invoice.payment_succeeded",
-  // "customer.subscription.updated",
   "customer.subscription.deleted",
 ]);
 

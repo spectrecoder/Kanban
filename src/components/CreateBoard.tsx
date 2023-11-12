@@ -73,6 +73,10 @@ export default function CreateBoard() {
           if (!old) return old;
           return [...old, data];
         });
+        utils.subscription.getUserSubscriptionPlan.setData(undefined, (old) => {
+          if (!old) return old;
+          return { ...old, usage: old.usage + 1 };
+        });
       },
       onError: (err) => {
         console.log(err);

@@ -94,7 +94,7 @@ export default function Register({ setCurrentCard }: Props) {
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4 ">
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid gap-4 sm:grid-cols-2">
           <Button variant="purple">Discord</Button>
           <Button variant="destructive">Google</Button>
         </div>

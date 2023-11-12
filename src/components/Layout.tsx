@@ -14,6 +14,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import CreateTask from "./CreateTask";
 import Plans from "./Plans";
+import { ScrollArea } from "./ui/scroll-area";
 
 interface Props {
   children: JSX.Element;
@@ -66,11 +67,13 @@ export default function Layout({ children }: Props) {
       <main className="relative flex h-screen">
         <section ref={parent}>
           {showSidebar ? (
-            <Sidebar />
+            <ScrollArea className="hidden h-full w-64 border-0 border-r border-solid border-main-border bg-main-background lg:flex">
+              <Sidebar />
+            </ScrollArea>
           ) : (
             <button
               onClick={openSidebar}
-              className={`absolute bottom-10 left-0 z-20 w-14 rounded-r-full bg-main-color py-3 pl-5 text-white transition-all duration-300 dark:bg-main-background dark:hover:bg-main-color`}
+              className={`absolute bottom-10 left-0 z-20 hidden w-14 rounded-r-full bg-main-color py-3 pl-5 text-white transition-all duration-300 dark:bg-main-background dark:hover:bg-main-color lg:flex`}
             >
               <Eye className="h-[1.2rem] w-[1.2rem]" />
             </button>

@@ -49,7 +49,7 @@ export function QuotaBar() {
             <Progress
               value={
                 subscriptionPlan.usage > subscriptionPlan.usageLimit
-                  ? subscriptionPlan.usageLimit
+                  ? 100
                   : (subscriptionPlan.usage / subscriptionPlan.usageLimit) * 100
               }
               className="mt-1 w-full"

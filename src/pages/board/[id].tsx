@@ -19,6 +19,20 @@ import { cn } from "~/lib/utils";
 import { appRouter } from "~/server/api/root";
 import { createInnerTRPCContext } from "~/server/api/trpc";
 import { getServerAuthSession } from "~/server/auth";
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverEvent,
+  DragOverlay,
+  DragStartEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import { SortableContext, arrayMove } from "@dnd-kit/sortable";
+import TasksGroupOverlay from "~/components/TasksGroupOverlay";
+import { createPortal } from "react-dom";
+import TaskOverlay from "~/components/TaskOverlay";
 
 export default function Board({
   userSession,
@@ -26,9 +40,13 @@ export default function Board({
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const isSidebarOpen = useSidebar((state) => state.isOpen);
   const onOpen = useModal((state) => state.onOpen);
-  const [activeColumn, setActiveColumn] = useState<
-    RouterOutputs["board"]["getSingleBoard"]["boardColumns"][number] | null
-  >(null);
+  const [activeItem, setActiveItem] = useState<{
+    data:
+      | RouterOutputs["board"]["getSingleBoard"]["boardColumns"][number]
+      | RouterOutputs["board"]["getSingleBoard"]["boardColumns"][number]["tasks"][number];
+    type: "column" | "task";
+  } | null>(null);
+  const utils = api.useContext();
 
   const { data: currentBoard } = api.board.getSingleBoard.useQuery(
     { boardID },
@@ -39,9 +57,17 @@ export default function Board({
 
   const [boardColumnsParent] = useAutoAnimate();
 
-  const columnsID = useMemo(
+  let columnIds = useMemo(
     () => currentBoard?.boardColumns.map((bc) => bc.id) || [],
     [currentBoard]
+  );
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 2,
+      },
+    })
   );
 
   if (!currentBoard) {
@@ -54,6 +80,104 @@ export default function Board({
         </AlertDescription>
       </Alert>
     );
+  }
+
+  function handleDragStart(event: DragStartEvent) {
+    if (!currentBoard) return;
+
+    const { active } = event;
+
+    if (active.data.current?.type === "column") {
+      const activeColumn = currentBoard.boardColumns.find(
+        (bc) => bc.id === active.id
+      );
+
+      if (!activeColumn) return;
+
+      setActiveItem({ data: activeColumn, type: "column" });
+    } else if (active.data.current?.type === "task") {
+      const activeTask = currentBoard.boardColumns
+        .find((bc) => bc.id === active.data.current?.columnId)
+        ?.tasks.find((t) => t.id === active.id);
+
+      if (!activeTask) return;
+
+      setActiveItem({ data: activeTask, type: "task" });
+    }
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    setActiveItem(null);
+
+    if (!currentBoard) return;
+
+    const { active, over } = event;
+
+    if (!over) return;
+
+    if (active.id === over.id) return;
+
+    if (
+      active.data.current?.type === "column" &&
+      over.data.current?.type === "column"
+    ) {
+      const activeIndex = currentBoard.boardColumns.findIndex(
+        (bc) => bc.id === active.id
+      );
+      const overIndex = currentBoard.boardColumns.findIndex(
+        (bc) => bc.id === over.id
+      );
+
+      const boardColumns = arrayMove(
+        currentBoard.boardColumns,
+        activeIndex,
+        overIndex
+      );
+
+      utils.board.getSingleBoard.setData({ boardID }, (old) => {
+        if (!old) return old;
+
+        return { ...old, boardColumns };
+      });
+    }
+  }
+
+  function handleDragOver(event: DragOverEvent) {
+    if (!currentBoard) return;
+
+    const { active, over } = event;
+
+    if (!over) return;
+
+    if (active.data.current?.type !== "task") return;
+
+    if (
+      over.data.current?.type === "task" &&
+      over.data.current?.columnId === active.data.current?.columnId
+    )
+      return;
+    if (
+      over.data.current?.type === "column" &&
+      over.id === active.data.current?.columnId
+    )
+      return;
+
+    if (over.data.current?.type === "task") {
+      const newColId = over.data.current?.columnId;
+      const oldColId = active.data.current?.columnId;
+
+      utils.board.getSingleBoard.setData({ boardID }, (old) => {
+        if (!old) return old;
+
+        const task = old.boardColumns
+          .find((bc) => bc.id === oldColId)
+          ?.tasks.find((t) => t.id === active.id);
+
+        // const boardColumns = old.boardColumns.map(bc => bc.id === oldColId ? {...bc, tasks: bc.tasks.filter(t => t.id !== active.id)} : bc.id === newColId ? )
+      });
+    }
+
+    console.log(over.data.current);
   }
 
   return (
@@ -75,9 +199,40 @@ export default function Board({
           <div className="flex h-[calc(100vh-76.8px)] gap-x-6 overflow-y-auto p-5 scrollbar-none">
             <main className="flex h-fit gap-x-6">
               <div className="flex h-full gap-x-6" ref={boardColumnsParent}>
-                {currentBoard.boardColumns.map((bc) => (
-                  <TasksGroup key={bc.id} boardColumn={bc} />
-                ))}
+                <DndContext
+                  onDragStart={handleDragStart}
+                  onDragEnd={handleDragEnd}
+                  onDragOver={handleDragOver}
+                  sensors={sensors}
+                >
+                  <SortableContext items={columnIds}>
+                    {currentBoard.boardColumns.map((bc) => (
+                      <TasksGroup key={bc.id} boardColumn={bc} />
+                    ))}
+                  </SortableContext>
+
+                  {typeof window !== "undefined" &&
+                    createPortal(
+                      <DragOverlay dropAnimation={null} zIndex={0}>
+                        {activeItem && activeItem.type === "column" && (
+                          <TasksGroupOverlay
+                            boardColumn={
+                              activeItem.data as RouterOutputs["board"]["getSingleBoard"]["boardColumns"][number]
+                            }
+                          />
+                        )}
+
+                        {activeItem && activeItem.type === "task" && (
+                          <TaskOverlay
+                            task={
+                              activeItem.data as RouterOutputs["board"]["getSingleBoard"]["boardColumns"][number]["tasks"][number]
+                            }
+                          />
+                        )}
+                      </DragOverlay>,
+                      document.body
+                    )}
+                </DndContext>
               </div>
 
               <aside
