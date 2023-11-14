@@ -9,7 +9,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "src/components/ui/dialog";
+} from "~/components/ui/dialog";
 import {
   Form,
   FormControl,

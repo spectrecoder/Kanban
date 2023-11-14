@@ -8,7 +8,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "src/components/ui/dropdown-menu";
-import { useModal } from "~/lib/hooks/useModal";
 
 interface Props {
   setOpenDeleteModal: Dispatch<SetStateAction<boolean>>;
@@ -19,8 +18,6 @@ export default function TaskSettings({
   setOpenDeleteModal,
   setOpenEditModal,
 }: Props) {
-  const onOpen = useModal((state) => state.onOpen);
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

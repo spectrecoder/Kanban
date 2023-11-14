@@ -14,7 +14,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "src/components/ui/dialog";
+} from "~/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -284,8 +284,8 @@ export default function TaskCard({ open, setOpen, taskId, taskTitle }: Props) {
       </Dialog>
 
       <DeleteTask
-        open={openDeleteModal}
-        setOpen={setOpenDeleteModal}
+        openDeleteModal={openDeleteModal}
+        setOpenDeleteModal={setOpenDeleteModal}
         taskTitle={taskTitle}
         taskId={taskId}
       />

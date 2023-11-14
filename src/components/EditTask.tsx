@@ -8,7 +8,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "src/components/ui/dialog";
+} from "~/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -29,7 +29,6 @@ import {
   SelectValue,
 } from "src/components/ui/select";
 import * as z from "zod";
-import { useModal } from "~/lib/hooks/useModal";
 import { Textarea } from "./ui/textarea";
 import { Dispatch, SetStateAction, useEffect } from "react";
 import { RouterOutputs, api } from "~/lib/api";

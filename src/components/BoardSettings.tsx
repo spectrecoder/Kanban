@@ -13,6 +13,7 @@ import {
 import { useModal } from "~/lib/hooks/useModal";
 import { avatarFallback } from "~/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Dialog } from "./ui/dialog";
 
 interface Props {
   userSession: Session;
@@ -22,7 +23,7 @@ export default function BoardSettings({ userSession }: Props) {
   const onModalOpen = useModal((state) => state.onOpen);
 
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <MoreVertical className="h-7 w-7 cursor-pointer text-gray-400" />
       </DropdownMenuTrigger>

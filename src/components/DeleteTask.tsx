@@ -8,7 +8,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "src/components/ui/alert-dialog";
-import { useModal } from "~/lib/hooks/useModal";
 import { Button } from "./ui/button";
 import { useToast } from "./ui/use-toast";
 import { api } from "~/lib/api";
@@ -19,15 +18,15 @@ import { Dispatch, SetStateAction } from "react";
 interface Props {
   taskTitle: string;
   taskId: string;
-  open: boolean;
-  setOpen: Dispatch<SetStateAction<boolean>>;
+  openDeleteModal: boolean;
+  setOpenDeleteModal: Dispatch<SetStateAction<boolean>>;
 }
 
 export default function DeleteTask({
   taskTitle,
   taskId,
-  open,
-  setOpen,
+  openDeleteModal,
+  setOpenDeleteModal,
 }: Props) {
   const { toast } = useToast();
   const router = useRouter();
@@ -54,7 +53,7 @@ export default function DeleteTask({
           };
         }
       );
-      setOpen(false);
+      setOpenDeleteModal(false);
     },
     onError: (err) => {
       console.log(err);
@@ -68,13 +67,13 @@ export default function DeleteTask({
   });
 
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
+    <AlertDialog open={openDeleteModal} onOpenChange={setOpenDeleteModal}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete this task?</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete the "{taskTitle}" task and its
-            subtasks? This action cannot be reversed.
+            Are you sure you want to delete the {'"' + taskTitle + '"'} task and
+            its subtasks? This action cannot be reversed.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

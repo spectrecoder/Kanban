@@ -85,6 +85,7 @@ model BoardColumn {
     id          String   @id @default(auto()) @map("_id") @db.ObjectId
     title       String
     columnColor String
+    order       Int
     createdAt   DateTime @default(now())
     board       Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
     boardId     String   @db.ObjectId
@@ -96,6 +97,7 @@ model Task {
     title       String
     description String?
     createdAt   DateTime @default(now())
+    order       Int
 
     subTasks SubTask[]
 

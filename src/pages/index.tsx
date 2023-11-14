@@ -175,8 +175,6 @@ export default function Home({
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  console.log("first");
-
   const userSession = (await getServerAuthSession(context))!;
 
   const ssg = createServerSideHelpers({

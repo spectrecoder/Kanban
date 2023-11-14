@@ -33,6 +33,7 @@ import { SortableContext, arrayMove } from "@dnd-kit/sortable";
 import TasksGroupOverlay from "~/components/TasksGroupOverlay";
 import { createPortal } from "react-dom";
 import TaskOverlay from "~/components/TaskOverlay";
+import { useToast } from "~/components/ui/use-toast";
 
 export default function Board({
   userSession,
@@ -47,6 +48,7 @@ export default function Board({
     type: "column" | "task";
   } | null>(null);
   const utils = api.useContext();
+  const { toast } = useToast();
 
   const { data: currentBoard } = api.board.getSingleBoard.useQuery(
     { boardID },
@@ -54,6 +56,40 @@ export default function Board({
       enabled: !!userSession,
     }
   );
+
+  const { mutate: reorderColumns } = api.board.reorderColumns.useMutation({
+    onSuccess: () => {
+      toast({
+        description: "Reordered Successfully",
+      });
+
+      if (!currentBoard) return;
+
+      const allTasks = currentBoard.boardColumns.flatMap((b) => b.tasks);
+
+      allTasks.map((t) =>
+        utils.task.getTaskDetail.setData(
+          { boardId: boardID, taskId: t.id },
+          (old) => {
+            if (!old) return old;
+            return {
+              ...old,
+              boardColumns: currentBoard.boardColumns.map((b) => ({
+                id: b.id,
+                title: b.title,
+              })),
+            };
+          }
+        )
+      );
+    },
+    onError: () => {
+      toast({
+        variant: "destructive",
+        description: "Reorder failed. Please try again later",
+      });
+    },
+  });
 
   const [boardColumnsParent] = useAutoAnimate();
 
@@ -134,10 +170,19 @@ export default function Board({
         overIndex
       );
 
+      boardColumns.forEach((bc, idx) => {
+        bc.order = idx;
+      });
+
       utils.board.getSingleBoard.setData({ boardID }, (old) => {
         if (!old) return old;
 
         return { ...old, boardColumns };
+      });
+
+      reorderColumns({
+        boardId: boardID,
+        columns: boardColumns.map((bc) => ({ id: bc.id, order: bc.order })),
       });
     }
   }
@@ -162,20 +207,39 @@ export default function Board({
     )
       return;
 
-    if (over.data.current?.type === "task") {
-      const newColId = over.data.current?.columnId;
-      const oldColId = active.data.current?.columnId;
+    const newColId =
+      over.data.current?.type === "task"
+        ? over.data.current?.columnId
+        : over.data.current?.type === "column"
+        ? over.id
+        : null;
 
-      utils.board.getSingleBoard.setData({ boardID }, (old) => {
-        if (!old) return old;
+    if (!newColId) return;
 
-        const task = old.boardColumns
-          .find((bc) => bc.id === oldColId)
-          ?.tasks.find((t) => t.id === active.id);
+    const oldColId = active.data.current?.columnId;
 
-        // const boardColumns = old.boardColumns.map(bc => bc.id === oldColId ? {...bc, tasks: bc.tasks.filter(t => t.id !== active.id)} : bc.id === newColId ? )
-      });
-    }
+    utils.board.getSingleBoard.setData({ boardID }, (old) => {
+      if (!old) return old;
+
+      const task = old.boardColumns
+        .find((bc) => bc.id === oldColId)
+        ?.tasks.find((t) => t.id === active.id);
+
+      if (!task) return old;
+
+      const boardColumns = old.boardColumns.map((bc) =>
+        bc.id === oldColId
+          ? { ...bc, tasks: bc.tasks.filter((t) => t.id !== active.id) }
+          : bc.id === newColId
+          ? {
+              ...bc,
+              tasks: [task, ...bc.tasks],
+            }
+          : bc
+      );
+
+      return { ...old, boardColumns };
+    });
 
     console.log(over.data.current);
   }

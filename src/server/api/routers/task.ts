@@ -26,10 +26,24 @@ export const taskRouter = createTRPCRouter({
           },
         });
 
+        const lastTask = await prisma.task.findFirst({
+          where: {
+            boardColumn: {
+              id: input.columnId,
+            },
+          },
+          orderBy: {
+            order: "desc",
+          },
+        });
+
+        const nextOrder = lastTask ? lastTask.order + 1 : 0;
+
         return await prisma.task.create({
           data: {
             title: input.title,
             description: input.description,
+            order: nextOrder,
             boardColumn: {
               connect: {
                 id: input.columnId,
@@ -106,6 +120,9 @@ export const taskRouter = createTRPCRouter({
           },
           select: {
             boardColumns: {
+              orderBy: {
+                order: "asc",
+              },
               select: {
                 id: true,
                 title: true,

@@ -6,56 +6,43 @@ import { UsageExceededError } from "~/lib/exceptions";
 import { formatError, pickColumnColor } from "~/lib/utils";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
-interface GetBoardDetailsProps {
-  prisma: PrismaClient<Prisma.PrismaClientOptions, never, DefaultArgs>;
-  userId: string;
-  boardID: string;
-}
-
-async function getBoardDetails({
-  prisma,
-  userId,
-  boardID,
-}: GetBoardDetailsProps) {
-  return await prisma.board.findUniqueOrThrow({
-    where: {
-      id: boardID,
-      user: {
-        id: userId,
-      },
+const boardDetails = {
+  id: true,
+  title: true,
+  boardColumns: {
+    orderBy: {
+      order: "asc",
     },
     select: {
       id: true,
       title: true,
-      boardColumns: {
+      columnColor: true,
+      order: true,
+      tasks: {
+        orderBy: {
+          order: "asc",
+        },
         select: {
           id: true,
           title: true,
-          columnColor: true,
-          tasks: {
+          subTasks: {
+            where: {
+              completed: true,
+            },
             select: {
               id: true,
-              title: true,
-              subTasks: {
-                where: {
-                  completed: true,
-                },
-                select: {
-                  id: true,
-                },
-              },
-              _count: {
-                select: {
-                  subTasks: true,
-                },
-              },
+            },
+          },
+          _count: {
+            select: {
+              subTasks: true,
             },
           },
         },
       },
     },
-  });
-}
+  },
+} as const;
 
 export const boardRouter = createTRPCRouter({
   create: protectedProcedure
@@ -89,12 +76,15 @@ export const boardRouter = createTRPCRouter({
                     id: session.user.id,
                   },
                 },
-                boardColumns: {
-                  create: columns.map((c) => ({
-                    title: c,
-                    columnColor: pickColumnColor(),
-                  })),
-                },
+                boardColumns: columns.length
+                  ? {
+                      create: columns.map((c, idx) => ({
+                        title: c,
+                        columnColor: pickColumnColor(),
+                        order: idx,
+                      })),
+                    }
+                  : undefined,
               },
               select: {
                 id: true,
@@ -148,10 +138,14 @@ export const boardRouter = createTRPCRouter({
     .input(z.object({ boardID: z.string() }))
     .query(async ({ ctx: { prisma, session }, input }) => {
       try {
-        return await getBoardDetails({
-          prisma,
-          userId: session.user.id,
-          boardID: input.boardID,
+        return await prisma.board.findUniqueOrThrow({
+          where: {
+            id: input.boardID,
+            user: {
+              id: session.user.id,
+            },
+          },
+          select: boardDetails,
         });
       } catch (err) {
         console.log(err);
@@ -214,6 +208,19 @@ export const boardRouter = createTRPCRouter({
             );
           }
 
+          const getLastCol = await tx.boardColumn.findFirst({
+            where: {
+              board: {
+                id: input.boardID,
+              },
+            },
+            orderBy: {
+              order: "desc",
+            },
+          });
+
+          const nextOrder = getLastCol ? getLastCol.order + 1 : 0;
+
           const updatedBoard = await tx.board.update({
             where: {
               id: input.boardID,
@@ -226,9 +233,10 @@ export const boardRouter = createTRPCRouter({
               boardColumns: {
                 createMany: input.createColumns.length
                   ? {
-                      data: input.createColumns.map((c) => ({
+                      data: input.createColumns.map((c, idx) => ({
                         title: c.name,
                         columnColor: pickColumnColor(),
+                        order: idx + nextOrder,
                       })),
                     }
                   : undefined,
@@ -237,36 +245,7 @@ export const boardRouter = createTRPCRouter({
                   : undefined,
               },
             },
-            select: {
-              id: true,
-              title: true,
-              boardColumns: {
-                select: {
-                  id: true,
-                  title: true,
-                  columnColor: true,
-                  tasks: {
-                    select: {
-                      id: true,
-                      title: true,
-                      subTasks: {
-                        where: {
-                          completed: true,
-                        },
-                        select: {
-                          id: true,
-                        },
-                      },
-                      _count: {
-                        select: {
-                          subTasks: true,
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            },
+            select: boardDetails,
           });
 
           return updatedBoard;
@@ -290,10 +269,25 @@ export const boardRouter = createTRPCRouter({
             },
           },
         });
+
+        const getLastCol = await prisma.boardColumn.findFirst({
+          where: {
+            board: {
+              id: input.boardId,
+            },
+          },
+          orderBy: {
+            order: "desc",
+          },
+        });
+
+        const nextOrder = getLastCol ? getLastCol.order + 1 : 0;
+
         return await prisma.boardColumn.create({
           data: {
             title: input.columnName,
             columnColor: pickColumnColor(),
+            order: nextOrder,
             board: {
               connect: {
                 id: input.boardId,
@@ -304,8 +298,49 @@ export const boardRouter = createTRPCRouter({
             id: true,
             title: true,
             columnColor: true,
+            order: true,
           },
         });
+      } catch (err) {
+        console.log(err);
+        throw new TRPCError(formatError(err));
+      }
+    }),
+  reorderColumns: protectedProcedure
+    .input(
+      z.object({
+        boardId: z.string(),
+        columns: z
+          .object({ id: z.string().min(6), order: z.number().gte(0) })
+          .array(),
+      })
+    )
+    .mutation(async ({ ctx: { prisma, session }, input }) => {
+      try {
+        await prisma.board.findUniqueOrThrow({
+          where: {
+            id: input.boardId,
+            user: {
+              id: session.user.id,
+            },
+          },
+        });
+
+        const reorderColumns = input.columns.map((c) =>
+          prisma.boardColumn.update({
+            where: {
+              id: c.id,
+              board: {
+                id: input.boardId,
+              },
+            },
+            data: {
+              order: c.order,
+            },
+          })
+        );
+
+        await prisma.$transaction(reorderColumns);
       } catch (err) {
         console.log(err);
         throw new TRPCError(formatError(err));
