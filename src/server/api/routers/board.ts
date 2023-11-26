@@ -25,6 +25,7 @@ const boardDetails = {
         select: {
           id: true,
           title: true,
+          order: true,
           subTasks: {
             where: {
               completed: true,

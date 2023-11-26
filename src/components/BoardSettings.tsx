@@ -1,5 +1,5 @@
 import { MoreVertical } from "lucide-react";
-import { Session } from "next-auth";
+import type { Session } from "next-auth";
 import { signOut } from "next-auth/react";
 import {
   DropdownMenu,
@@ -13,7 +13,6 @@ import {
 import { useModal } from "~/lib/hooks/useModal";
 import { avatarFallback } from "~/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { Dialog } from "./ui/dialog";
 
 interface Props {
   userSession: Session;

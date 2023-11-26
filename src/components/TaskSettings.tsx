@@ -37,5 +37,6 @@ export default function TaskSettings({
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+    // <button onClick={() => setOpenDeleteModal(true)}>Delete Task</button>
   );
 }

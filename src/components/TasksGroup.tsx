@@ -1,5 +1,5 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { RouterOutputs } from "~/lib/api";
+import type { RouterOutputs } from "~/lib/api";
 import { cn } from "~/lib/utils";
 import Task from "./Task";
 import { SortableContext, useSortable } from "@dnd-kit/sortable";

@@ -436,4 +436,54 @@ export const taskRouter = createTRPCRouter({
       }
     }
   ),
+  reorderTasks: protectedProcedure
+    .input(
+      z.object({
+        columnId: z.string(),
+        tasks: z
+          .object({ id: z.string().min(6), order: z.number().gte(0) })
+          .array(),
+        movedTask: z.string(),
+      })
+    )
+    .mutation(async ({ ctx: { prisma, session }, input }) => {
+      try {
+        await prisma.board.findFirstOrThrow({
+          where: {
+            user: {
+              id: session.user.id,
+            },
+            boardColumns: {
+              some: {
+                id: input.columnId,
+              },
+            },
+          },
+        });
+
+        const reorderTasks = input.tasks.map((t) =>
+          prisma.task.update({
+            where: {
+              id: t.id,
+            },
+            data: {
+              order: t.order,
+              boardColumn:
+                t.id === input.movedTask
+                  ? {
+                      connect: {
+                        id: input.columnId,
+                      },
+                    }
+                  : undefined,
+            },
+          })
+        );
+
+        await prisma.$transaction(reorderTasks);
+      } catch (err) {
+        console.log(err);
+        throw new TRPCError(formatError(err));
+      }
+    }),
 });

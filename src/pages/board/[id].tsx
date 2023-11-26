@@ -47,6 +47,7 @@ export default function Board({
       | RouterOutputs["board"]["getSingleBoard"]["boardColumns"][number]["tasks"][number];
     type: "column" | "task";
   } | null>(null);
+  const [swap, setSwap] = useState<boolean>(false);
   const utils = api.useContext();
   const { toast } = useToast();
 
@@ -81,6 +82,33 @@ export default function Board({
             };
           }
         )
+      );
+    },
+    onError: () => {
+      toast({
+        variant: "destructive",
+        description: "Reorder failed. Please try again later",
+      });
+    },
+  });
+
+  const { mutate: reorderTasks } = api.task.reorderTasks.useMutation({
+    onSuccess: (_, variables) => {
+      toast({
+        description: "Reordered Successfully",
+      });
+      utils.task.getTaskDetail.setData(
+        { boardId: boardID, taskId: variables.movedTask },
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            taskDetail: {
+              ...old.taskDetail,
+              boardColumn: { id: variables.columnId },
+            },
+          };
+        }
       );
     },
     onError: () => {
@@ -144,6 +172,7 @@ export default function Board({
 
   function handleDragEnd(event: DragEndEvent) {
     setActiveItem(null);
+    setSwap(false);
 
     if (!currentBoard) return;
 
@@ -151,7 +180,7 @@ export default function Board({
 
     if (!over) return;
 
-    if (active.id === over.id) return;
+    if (active.id === over.id && !swap) return;
 
     if (
       active.data.current?.type === "column" &&
@@ -184,6 +213,51 @@ export default function Board({
         boardId: boardID,
         columns: boardColumns.map((bc) => ({ id: bc.id, order: bc.order })),
       });
+    } else if (active.data.current?.type === "task") {
+      if (over.data.current?.type === "task") {
+        // console.log("active", active.data.current);
+        // console.log("over", over.data.current);
+
+        const overColId = over.data.current?.columnId as string;
+
+        const overColumn = currentBoard.boardColumns.find(
+          (bc) => bc.id === overColId
+        );
+
+        if (!overColumn) return;
+
+        const activeIndex = overColumn.tasks.findIndex(
+          (t) => t.id === active.id
+        );
+        const overIndex = overColumn.tasks.findIndex((t) => t.id === over.id);
+
+        const tasks = arrayMove(overColumn.tasks, activeIndex, overIndex);
+
+        tasks.forEach((t, idx) => {
+          t.order = idx;
+        });
+
+        utils.board.getSingleBoard.setData({ boardID }, (old) => {
+          if (!old) return old;
+
+          const boardColumns = old.boardColumns.map((bc) =>
+            bc.id === overColId
+              ? {
+                  ...bc,
+                  tasks,
+                }
+              : bc
+          );
+
+          return { ...old, boardColumns };
+        });
+
+        reorderTasks({
+          columnId: overColId,
+          tasks: tasks.map((t) => ({ id: t.id, order: t.order })),
+          movedTask: active.id as string,
+        });
+      }
     }
   }
 
@@ -241,7 +315,9 @@ export default function Board({
       return { ...old, boardColumns };
     });
 
-    console.log(over.data.current);
+    console.log("first");
+
+    setSwap(true);
   }
 
   return (

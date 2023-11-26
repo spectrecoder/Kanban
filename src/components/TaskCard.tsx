@@ -1,11 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Dispatch,
-  SetStateAction,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { type Dispatch, type SetStateAction, useEffect, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import {
   Dialog,
@@ -36,7 +30,7 @@ import { z } from "zod";
 import TaskSettings from "./TaskSettings";
 import { Button } from "./ui/button";
 import { Checkbox } from "./ui/checkbox";
-import { RouterOutputs, api } from "~/lib/api";
+import { api } from "~/lib/api";
 import { useToast } from "./ui/use-toast";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
@@ -96,7 +90,7 @@ export default function TaskCard({ open, setOpen, taskId, taskTitle }: Props) {
           (data.taskDetail.boardColumn.id !== newData.boardColumn.id ||
             variables.subtasks.length)
         ) {
-          utils.board.getSingleBoard.invalidate({
+          void utils.board.getSingleBoard.invalidate({
             boardID: router.query.id as string,
           });
         }
@@ -125,14 +119,14 @@ export default function TaskCard({ open, setOpen, taskId, taskTitle }: Props) {
     form.setValue("subtasks", data.taskDetail.subTasks);
 
     form.setValue("status", data.taskDetail.boardColumn.id);
-  }, [data]);
+  }, [data, form]);
 
   if (error) console.log(error);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     if (!data) return;
 
-    const currentSubtasks: { [key: string]: boolean } = {};
+    const currentSubtasks: Record<string, boolean> = {};
 
     data.taskDetail.subTasks.forEach((st) => {
       currentSubtasks[st.id] = st.completed;
@@ -181,7 +175,7 @@ export default function TaskCard({ open, setOpen, taskId, taskTitle }: Props) {
 
               <Form {...form}>
                 <form
-                  onSubmit={form.handleSubmit(onSubmit)}
+                  onSubmit={void form.handleSubmit(onSubmit)}
                   className="mt-2.5 space-y-4"
                 >
                   <div>

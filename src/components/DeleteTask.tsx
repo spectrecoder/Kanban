@@ -1,6 +1,5 @@
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -13,7 +12,7 @@ import { useToast } from "./ui/use-toast";
 import { api } from "~/lib/api";
 import { useRouter } from "next/router";
 import { Loader2 } from "lucide-react";
-import { Dispatch, SetStateAction } from "react";
+import type { Dispatch, SetStateAction } from "react";
 
 interface Props {
   taskTitle: string;
@@ -94,6 +93,7 @@ export default function DeleteTask({
             )}
           </Button>
           <AlertDialogCancel className="flex-grow">Cancel</AlertDialogCancel>
+          {/* <button className="flex-grow">Cancel</button> */}
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
