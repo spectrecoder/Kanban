@@ -21,7 +21,7 @@ export default function TaskSettings({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <MoreVertical className="h-6 w-6 cursor-pointer text-gray-400" />
+        <MoreVertical className="w-6 h-6 text-gray-400 cursor-pointer" />
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-44 bg-board-background">
         <DropdownMenuLabel>Actions</DropdownMenuLabel>
@@ -37,6 +37,5 @@ export default function TaskSettings({
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-    // <button onClick={() => setOpenDeleteModal(true)}>Delete Task</button>
   );
 }

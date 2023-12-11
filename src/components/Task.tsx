@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { RouterOutputs } from "~/lib/api";
+import type { RouterOutputs } from "~/lib/api";
 import { cn } from "~/lib/utils";
 import TaskCard from "./TaskCard";
 import { useRouter } from "next/router";
@@ -36,7 +36,7 @@ export default function Task({ task, columnId }: TaskProps) {
   useEffect(() => {
     if (!routerQuery.taskId) return;
     if (routerQuery.taskId === task.id) setOpenDetailModal(true);
-  }, []);
+  }, [routerQuery.taskId, task.id]);
 
   if (isDragging) {
     return (

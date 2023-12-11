@@ -58,7 +58,7 @@ export default function DeleteBoard({ boardTitle }: Props) {
             action will remove all columns and tasks and cannot be reversed.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
+        <AlertDialogFooter className="gap-y-2">
           <Button
             disabled={isLoading}
             variant="destructive"

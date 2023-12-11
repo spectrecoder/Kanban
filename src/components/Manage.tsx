@@ -74,7 +74,7 @@ export default function Manage({ subscriptionPlan }: Props) {
             )}
           </Button>
           {subscriptionPlan.plan !== "free" ? (
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+            <p className="pb-2 text-sm font-medium text-gray-600 dark:text-gray-300">
               {subscriptionPlan.isCanceled
                 ? "Your plan will be canceled on "
                 : "Your plan renews on "}

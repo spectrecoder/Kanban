@@ -33,7 +33,6 @@ export default function Overview() {
           fontSize={12}
           tickLine={false}
           axisLine={false}
-          // tickFormatter={(value) => value}
         />
         <Bar dataKey="total" fill="#635FC7" radius={[4, 4, 0, 0]} />
       </BarChart>

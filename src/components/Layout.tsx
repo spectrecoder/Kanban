@@ -1,18 +1,12 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { Eye } from "lucide-react";
 import Head from "next/head";
-import DeleteBoard from "~/components/DeleteBoard";
-import DeleteTask from "~/components/DeleteTask";
-import EditBoard from "~/components/EditBoard";
-import EditTask from "~/components/EditTask";
-import Sidebar from "~/components/Sidebar";
-import TaskCard from "~/components/TaskCard";
-import { useSidebar } from "~/lib/hooks/use-sidebar";
-import CreateBoard from "./CreateBoard";
-import LoadingBar from "react-top-loading-bar";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import CreateTask from "./CreateTask";
+import LoadingBar from "react-top-loading-bar";
+import Sidebar from "~/components/Sidebar";
+import { useSidebar } from "~/lib/hooks/use-sidebar";
+import CreateBoard from "./CreateBoard";
 import Plans from "./Plans";
 import { ScrollArea } from "./ui/scroll-area";
 
@@ -87,27 +81,3 @@ export default function Layout({ children }: Props) {
     </>
   );
 }
-
-// function AuthShowcase() {
-//   const { data: sessionData } = useSession();
-
-//   const { data: secretMessage } = api.example.getSecretMessage.useQuery(
-//     undefined, // no input
-//     { enabled: sessionData?.user !== undefined }
-//   );
-
-//   return (
-//     <div className="flex flex-col items-center justify-center gap-4">
-//       <p className="text-2xl text-center text-white">
-//         {sessionData && <span>Logged in as {sessionData.user?.name}</span>}
-//         {secretMessage && <span> - {secretMessage}</span>}
-//       </p>
-//       <button
-//         className="px-10 py-3 font-semibold text-white no-underline transition rounded-full bg-white/10 hover:bg-white/20"
-//         onClick={sessionData ? () => void signOut() : () => void signIn()}
-//       >
-//         {sessionData ? "Sign out" : "Sign in"}
-//       </button>
-//     </div>
-//   );
-// }

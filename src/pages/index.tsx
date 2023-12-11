@@ -1,5 +1,11 @@
 import { createServerSideHelpers } from "@trpc/react-query/server";
-import { BookOpenCheck, KanbanSquare, ListChecks, Receipt } from "lucide-react";
+import {
+  BookOpenCheck,
+  KanbanSquare,
+  ListChecks,
+  LogOut,
+  Receipt,
+} from "lucide-react";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { signOut } from "next-auth/react";
 import Head from "next/head";
@@ -40,7 +46,7 @@ export default function Home({
         <header className="flex items-center justify-between border-0 border-b border-solid border-main-border bg-main-background px-5 py-3.5">
           <figure className="flex w-full items-center gap-x-2">
             <SidebarSheet />
-            <Avatar>
+            <Avatar className="hidden sm:block">
               <AvatarImage
                 src={userSession.user.image || undefined}
                 alt="@user"
@@ -55,8 +61,19 @@ export default function Home({
           </figure>
           <div className="flex items-center gap-3">
             <CommandMenu />
-            <Button onClick={() => void signOut()} variant="destructive">
+            <Button
+              onClick={() => void signOut()}
+              variant="destructive"
+              className="hidden sm:block"
+            >
               Logout
+            </Button>
+            <Button
+              onClick={() => void signOut()}
+              variant="destructive"
+              className="block sm:hidden"
+            >
+              <LogOut />
             </Button>
           </div>
         </header>
@@ -72,7 +89,7 @@ export default function Home({
                   <KanbanSquare className="h-5 w-5 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">
+                  <div className="text-xl font-bold sm:text-2xl">
                     {statistic?.totalBoards ?? 0}
                   </div>
                 </CardContent>
@@ -86,7 +103,7 @@ export default function Home({
                   <BookOpenCheck className="h-5 w-5 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">
+                  <div className="text-xl font-bold sm:text-2xl">
                     {statistic?.totalTasks ?? 0}
                   </div>
                 </CardContent>
@@ -100,7 +117,7 @@ export default function Home({
                   <ListChecks className="h-5 w-5 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">
+                  <div className="text-xl font-bold sm:text-2xl">
                     {statistic?.totalSubtasks ?? 0}
                   </div>
                 </CardContent>
@@ -114,7 +131,7 @@ export default function Home({
                   <Receipt className="h-5 w-5 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">
+                  <div className="text-xl font-bold sm:text-2xl">
                     {statistic
                       ? statistic.currentPlan[0]?.toUpperCase() +
                         statistic.currentPlan.slice(1)
@@ -124,10 +141,10 @@ export default function Home({
               </Card>
             </div>
 
-            <div className="grid grid-cols-7 gap-4">
-              <Card className="col-span-4 border border-solid border-main-border bg-main-background">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-7">
+              <Card className="h-fit border border-solid border-main-border bg-main-background lg:col-span-4">
                 <CardHeader>
-                  <CardTitle>
+                  <CardTitle className="text-xl sm:text-2xl">
                     Tasks Overview ({new Date().getFullYear()})
                   </CardTitle>
                 </CardHeader>
@@ -135,9 +152,11 @@ export default function Home({
                   <Overview />
                 </CardContent>
               </Card>
-              <Card className="col-span-3 border border-solid border-main-border bg-main-background">
+              <Card className="border border-solid border-main-border bg-main-background lg:col-span-3">
                 <CardHeader>
-                  <CardTitle>Recent Tasks</CardTitle>
+                  <CardTitle className="text-xl sm:text-2xl">
+                    Recent Tasks
+                  </CardTitle>
                   <CardDescription>
                     Tasks created recently by you.
                   </CardDescription>
@@ -196,22 +215,3 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     },
   };
 }
-
-/* <section className="absolute -translate-x-1/2 -translate-y-1/2 left-1/2 top-1/2 w-fit">
-    <h3 className="text-3xl font-bold text-center text-primary">
-      Welcome {userSession.user.name}
-    </h3>
-    <p className="my-1 text-base text-center text-muted-foreground">
-      You are one step closer to your productive life. Start by creating a
-      new board
-    </p>
-    <div className="flex items-center justify-center">
-      <Button
-        onClick={openCreateBoard}
-        size="full"
-        className="px-5 py-6 mt-3 text-base"
-      >
-        +Create Board
-      </Button>
-    </div>
-  </section> */

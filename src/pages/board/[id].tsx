@@ -332,7 +332,7 @@ export default function Board({
         <ScrollArea
           direction="horizontal"
           className={cn(
-            "w-[calc(100vw-16rem)] max-w-[calc(100vw-16rem)] transition-all duration-300",
+            "w-screen max-w-[100vw] transition-all duration-300 lg:w-[calc(100vw-16rem)] lg:max-w-[calc(100vw-16rem)]",
             !isSidebarOpen && "w-screen max-w-[100vw]"
           )}
         >

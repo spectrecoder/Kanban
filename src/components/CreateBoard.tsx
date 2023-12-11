@@ -151,7 +151,7 @@ export default function CreateBoard() {
               </div>
             </fieldset>
 
-            <DialogFooter className="sm:flex-col sm:space-x-0">
+            <DialogFooter className="gap-y-2 sm:flex-col sm:space-x-0">
               <Button
                 type="button"
                 size="full"

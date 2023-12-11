@@ -99,7 +99,7 @@ export default function EditTask({
             return { ...old, taskDetail: data };
           }
         );
-        utils.board.getSingleBoard.invalidate({
+        void utils.board.getSingleBoard.invalidate({
           boardID: router.query.id as string,
         });
       },
@@ -121,7 +121,7 @@ export default function EditTask({
         id: st.id,
       }))
     );
-  }, [taskDetail, open]);
+  }, [taskDetail, open, form]);
 
   useEffect(() => {
     if (!taskDetail || !open) return;
@@ -134,9 +134,10 @@ export default function EditTask({
     taskDetail?.description,
     taskDetail?.boardColumn.id,
     open,
+    form,
   ]);
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  function onSubmit(values: z.infer<typeof formSchema>): void {
     if (!taskDetail) return;
 
     console.log(values);
@@ -225,7 +226,7 @@ export default function EditTask({
                     <Textarea
                       placeholder="e.g. It's always good to take a break. This  15 minute break will  recharge the batteries  a little."
                       {...field}
-                      className="h-28 cursor-pointer resize-none outline-0 ring-offset-0 focus-visible:border-main-color focus-visible:outline-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                      className="cursor-pointer resize-none h-28 outline-0 ring-offset-0 focus-visible:border-main-color focus-visible:outline-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                     />
                   </FormControl>
                   <FormMessage />
@@ -251,7 +252,7 @@ export default function EditTask({
                             />
                             <X
                               onClick={() => remove(idx)}
-                              className="h-7 w-7 cursor-pointer text-gray-400"
+                              className="text-gray-400 cursor-pointer h-7 w-7"
                             />
                           </div>
                         </FormControl>
@@ -267,7 +268,7 @@ export default function EditTask({
               onClick={() => append({ title: "" })}
               type="button"
               size="full"
-              className="w-full font-bold capitalize text-white dark:text-main-color"
+              className="w-full font-bold text-white capitalize dark:text-main-color"
             >
               + add new subtask
             </Button>
@@ -313,7 +314,7 @@ export default function EditTask({
               >
                 {editingTask ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     editing
                   </>
                 ) : (
