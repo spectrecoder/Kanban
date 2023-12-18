@@ -137,7 +137,7 @@ export default function Board({
   if (!currentBoard) {
     return (
       <Alert variant="destructive" className="m-4 h-fit bg-board-background">
-        <AlertCircle className="h-4 w-4" />
+        <AlertCircle className="w-4 h-4" />
         <AlertTitle>Error</AlertTitle>
         <AlertDescription>
           Board not found. Please enter a valid board id.
@@ -333,7 +333,7 @@ export default function Board({
           direction="horizontal"
           className={cn(
             "w-screen max-w-[100vw] transition-all duration-300 lg:w-[calc(100vw-16rem)] lg:max-w-[calc(100vw-16rem)]",
-            !isSidebarOpen && "w-screen max-w-[100vw]"
+            !isSidebarOpen && "lg:w-screen lg:max-w-[100vw]"
           )}
         >
           <div className="flex h-[calc(100vh-76.8px)] gap-x-6 overflow-y-auto p-5 scrollbar-none">

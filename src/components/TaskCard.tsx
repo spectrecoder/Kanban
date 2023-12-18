@@ -157,10 +157,10 @@ export default function TaskCard({ open, setOpen, taskId, taskTitle }: Props) {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[90%] overflow-y-auto bg-main-background scrollbar-none sm:max-w-[425px]">
           {isLoading ? (
-            <Loader2 className="mx-auto my-3 h-6 w-6 animate-spin" />
+            <Loader2 className="w-6 h-6 mx-auto my-3 animate-spin" />
           ) : data ? (
             <>
-              <header className="mt-3 flex items-center justify-between gap-x-2">
+              <header className="flex items-center justify-between mt-3 gap-x-2">
                 <DialogHeader>
                   <DialogTitle>{data.taskDetail.title}</DialogTitle>
                   <DialogDescription>
@@ -175,7 +175,7 @@ export default function TaskCard({ open, setOpen, taskId, taskTitle }: Props) {
 
               <Form {...form}>
                 <form
-                  onSubmit={void form.handleSubmit(onSubmit)}
+                  onSubmit={form.handleSubmit(onSubmit)}
                   className="mt-2.5 space-y-4"
                 >
                   <div>
@@ -195,7 +195,7 @@ export default function TaskCard({ open, setOpen, taskId, taskTitle }: Props) {
                           control={form.control}
                           name={`subtasks.${idx}.completed`}
                           render={({ field }) => (
-                            <FormItem className="flex items-center space-x-2 space-y-0 rounded-sm bg-board-background p-3 hover:bg-main-color/20 dark:hover:bg-main-color/30">
+                            <FormItem className="flex items-center p-3 space-x-2 space-y-0 rounded-sm bg-board-background hover:bg-main-color/20 dark:hover:bg-main-color/30">
                               <FormControl>
                                 <Checkbox
                                   checked={field.value}
@@ -254,7 +254,7 @@ export default function TaskCard({ open, setOpen, taskId, taskTitle }: Props) {
                     >
                       {savingTask ? (
                         <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                           saving
                         </>
                       ) : (
@@ -267,7 +267,7 @@ export default function TaskCard({ open, setOpen, taskId, taskTitle }: Props) {
             </>
           ) : (
             <Alert variant="destructive" className="h-fit bg-board-background">
-              <AlertCircle className="h-4 w-4" />
+              <AlertCircle className="w-4 h-4" />
               <AlertTitle>Error</AlertTitle>
               <AlertDescription>
                 Something went wrong. Please try again later.

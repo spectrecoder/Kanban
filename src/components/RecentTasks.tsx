@@ -19,7 +19,7 @@ export default function RecentTasks() {
             <AlarmCheck className="h-8 min-h-[2rem] w-8 min-w-[2rem]" />
             <div className="space-y-1">
               <p
-                className="cursor-pointer text-sm font-medium leading-none hover:underline"
+                className="text-sm font-medium leading-none cursor-pointer hover:underline"
                 onClick={() =>
                   router.push(
                     `/board/${task.boardColumn.board.id}?taskId=${task.id}`
@@ -31,13 +31,12 @@ export default function RecentTasks() {
               {task.description && (
                 <p className="text-sm text-muted-foreground">
                   {task.description.slice(0, 50)}
-                  {task.description.length > 50 ? "..." : ""} Lorem ipsum dolor
-                  sit amet consectetur adipisicing elit. Commodi, voluptate?
+                  {task.description.length > 50 ? "..." : ""}
                 </p>
               )}
             </div>
           </div>
-          <div className="hidden whitespace-nowrap font-medium sm:block">
+          <div className="hidden font-medium whitespace-nowrap sm:block">
             {task._count.subTasks}{" "}
             <span className="font-normal">
               sub{task._count.subTasks > 1 ? "tasks" : "task"}

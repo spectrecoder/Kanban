@@ -168,6 +168,23 @@ export const taskRouter = createTRPCRouter({
             );
           }
 
+          let nextOrder = undefined;
+
+          if (input.columnId) {
+            const lastTask = await tx.task.findFirst({
+              where: {
+                boardColumn: {
+                  id: input.columnId,
+                },
+              },
+              orderBy: {
+                order: "desc",
+              },
+            });
+
+            nextOrder = lastTask ? lastTask.order + 1 : 0;
+          }
+
           const saveTask = await tx.task.update({
             where: {
               id: input.taskId,
@@ -187,6 +204,7 @@ export const taskRouter = createTRPCRouter({
                     },
                   }
                 : undefined,
+              order: nextOrder,
             },
             select: {
               id: true,
